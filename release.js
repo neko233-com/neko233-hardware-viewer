@@ -32,6 +32,21 @@ rl.question("Enter commit message (default: 'Release update'): ", (answer) => {
 
     const startTime = Date.now();
 
+    // 0. Load Signing Key
+    const keyPath = path.join(__dirname, 'tauri.key');
+    if (fs.existsSync(keyPath)) {
+        try {
+            const keyContent = fs.readFileSync(keyPath, 'utf-8').trim();
+            process.env.TAURI_PRIVATE_KEY = keyContent;
+            process.env.TAURI_KEY_PASSWORD = ''; // Empty password as generated
+            console.log('[Info] Loaded signing key from tauri.key');
+        } catch (e) {
+            console.warn('[Warning] Failed to read tauri.key:', e.message);
+        }
+    } else {
+        console.warn('[Warning] tauri.key not found. Build may fail if updater is enabled.');
+    }
+
     // 1. Build
     console.log('\n[Step 1/4] Building Application...');
     // Ensure dependencies are installed? Maybe skip to save time, assume dev env.
