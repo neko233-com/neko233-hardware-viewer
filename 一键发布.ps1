@@ -107,12 +107,18 @@ if (Test-Path "$msiPath\*.msi") { Copy-Item "$msiPath\*.msi" -Destination "relea
 
 # 8. 推送到 GitHub
 Log-Message "正在推送到 GitHub..."
+$prev = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 git push origin main 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
+$ErrorActionPreference = $prev
 
 # 9. 创建并推送 Tag
 Log-Message "正在创建并推送 Tag v$newVersion..."
+$prev = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 git tag "v$newVersion" 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
 git push origin "v$newVersion" 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
+$ErrorActionPreference = $prev
 
 # 10. GitHub Release
 if (Get-Command "gh" -ErrorAction SilentlyContinue) {
