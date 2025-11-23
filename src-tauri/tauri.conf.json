@@ -1,4 +1,4 @@
-﻿{
+{
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
