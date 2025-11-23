@@ -41,10 +41,21 @@ $targetVersion = Read-Host "请输入新版本号 (回车默认自动+1 Patch)"
 
 if ([string]::IsNullOrWhiteSpace($targetVersion)) {
     Log-Message "正在自动升级补丁版本号..."
+    # 临时允许 stderr，防止 npm warn/error 中断脚本
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
     npm version patch --no-git-tag-version 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
+    $ErrorActionPreference = $prev
 } else {
-    Log-Message "正在设置版本号为 $targetVersion..."
-    npm version $targetVersion --no-git-tag-version 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
+    if ($targetVersion -eq $currentVersion) {
+        Log-Message "目标版本 ($targetVersion) 与当前版本相同，跳过 npm version 操作。" "WARNING"
+    } else {
+        Log-Message "正在设置版本号为 $targetVersion..."
+        $prev = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        npm version $targetVersion --no-git-tag-version 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
+        $ErrorActionPreference = $prev
+    }
 }
 
 # 读取新版本号
