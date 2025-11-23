@@ -100,7 +100,7 @@ onUnmounted(() => {
 <style scoped>
 .sidebar {
   width: 250px;
-  height: 100vh;
+  height: 100%;
   background: rgba(0, 0, 0, 0.8);
   border-right: 1px solid var(--cp-primary);
   display: flex;

@@ -34,8 +34,20 @@
       </div>
     </div>
 
-    <div v-if="loading" class="loading-text">
-      {{ $t('loading') }}
+    <div v-if="loading" class="cyber-loader">
+      <div class="loader-content">
+        <div class="scanner-line"></div>
+        <div class="loader-text" :data-text="$t('loading')">{{ $t('loading') }}</div>
+        <div class="loader-subtext">SYSTEM_INITIALIZING...</div>
+        <div class="loading-bar">
+          <div class="loading-progress"></div>
+        </div>
+        <div class="terminal-output">
+          <div class="term-line">> BIOS_CHECK... OK</div>
+          <div class="term-line">> MEMORY_ALLOC... OK</div>
+          <div class="term-line">> DRIVER_SCAN... PENDING</div>
+        </div>
+      </div>
     </div>
 
     <div v-else-if="error" class="cp-section">
@@ -624,5 +636,117 @@ onUnmounted(() => {
 }
 .slot-item {
   margin-bottom: 2px;
+}
+
+.cyber-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--cp-primary);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+  margin: 20px 0;
+}
+
+.loader-content {
+  text-align: center;
+  width: 300px;
+  position: relative;
+  z-index: 2;
+}
+
+.loader-text {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: var(--cp-primary);
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+  position: relative;
+  animation: glitch-text 2s infinite;
+  text-transform: uppercase;
+}
+
+.loader-subtext {
+  font-size: 0.8em;
+  color: var(--cp-secondary);
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+
+.loading-bar {
+  height: 4px;
+  background: #111;
+  border: 1px solid #333;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.loading-progress {
+  height: 100%;
+  background: var(--cp-primary);
+  width: 0%;
+  animation: progress-fill 2s ease-in-out infinite;
+  box-shadow: 0 0 10px var(--cp-primary);
+}
+
+.scanner-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--cp-success);
+  opacity: 0.5;
+  animation: scan-vertical 1.5s linear infinite;
+  z-index: 1;
+}
+
+.terminal-output {
+  text-align: left;
+  font-family: 'Courier New', monospace;
+  font-size: 0.7em;
+  color: #888;
+  border-top: 1px dashed #333;
+  padding-top: 10px;
+}
+
+.term-line {
+  opacity: 0;
+  animation: fade-in-up 0.5s forwards;
+}
+
+.term-line:nth-child(1) { animation-delay: 0.2s; }
+.term-line:nth-child(2) { animation-delay: 0.6s; }
+.term-line:nth-child(3) { animation-delay: 1.0s; }
+
+@keyframes progress-fill {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+@keyframes scan-vertical {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glitch-text {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
 }
 </style>

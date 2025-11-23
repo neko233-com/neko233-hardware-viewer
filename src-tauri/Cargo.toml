@@ -7,7 +7,7 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = [ "updater", "shell-open"] }
+tauri = { version = "1", features = [ "window-all", "updater", "shell-open"] }
 anyhow = "1.0.100"
 colored = "3.0.0"
 lazy_static = "1.5.0"

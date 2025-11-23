@@ -1,29 +1,46 @@
 <template>
-  <div class="app-layout">
-    <div class="drag-region" data-tauri-drag-region></div>
-    <Sidebar 
-      :activeId="activeTab" 
-      :items="sortedMenuItems" 
-      @select="activeTab = $event"
-      @reorder="handleReorder"
-    >
-      <template #footer>
-        <div class="sidebar-controls">
-          <button class="settings-btn-sidebar" @click="activeTab = 'settings'">
-            <span class="icon">⚙️</span>
-            <span class="label">{{ $t('buttons.settings') || 'SET' }}</span>
-          </button>
-          <div class="window-controls">
-            <button class="minimize-btn-sidebar" @click="minimizeApp" title="Minimize">_</button>
-            <button class="fullscreen-btn-sidebar" @click="toggleFullscreen" title="Fullscreen">□</button>
-            <button class="exit-btn-sidebar" @click="exitApp" title="Exit">×</button>
+  <div class="app-layout" @contextmenu.prevent>
+    <!-- Top Title Bar for Dragging -->
+    <div class="title-bar">
+      <!-- Drag Region: Occupies all space except controls -->
+      <div class="drag-area" data-tauri-drag-region>
+        <div class="app-title">NEKO233 HARDWARE VIEWER</div>
+      </div>
+      
+      <!-- Window Controls: OUTSIDE the drag region to prevent conflicts -->
+      <div class="title-controls">
+        <button class="title-btn minimize" @click="minimizeApp">─</button>
+        <button class="title-btn fullscreen" @click="toggleFullscreen">□</button>
+        <button class="title-btn close" @click="exitApp">×</button>
+      </div>
+    </div>
+
+    <div class="main-container">
+      <Sidebar 
+        :activeId="activeTab" 
+        :items="sortedMenuItems" 
+        @select="activeTab = $event"
+        @reorder="handleReorder"
+      >
+        <template #footer>
+          <div class="sidebar-controls">
+            <button class="settings-btn-sidebar" @click="activeTab = 'settings'">
+              <span class="icon">⚙️</span>
+              <span class="label">{{ $t('buttons.settings') || 'SET' }}</span>
+            </button>
+            <!-- Bottom controls kept as requested, but Top Bar is primary for window management -->
+            <div class="window-controls">
+              <button class="minimize-btn-sidebar" @click="minimizeApp" title="Minimize">_</button>
+              <button class="fullscreen-btn-sidebar" @click="toggleFullscreen" title="Fullscreen">□</button>
+              <button class="exit-btn-sidebar" @click="exitApp" title="Exit">×</button>
+            </div>
           </div>
-        </div>
-      </template>
-    </Sidebar>
-    <div class="content-area">
-      <LanguageSelector class="lang-selector" />
-      <component :is="activeComponent" />
+        </template>
+      </Sidebar>
+      <div class="content-area">
+        <LanguageSelector class="lang-selector" />
+        <component :is="activeComponent" />
+      </div>
     </div>
 
     <!-- Settings Modal Removed -->
@@ -157,15 +174,13 @@ onMounted(async () => {
     e.preventDefault();
   });
 
-  // Global Ctrl + F11 Fullscreen Listener
+  // Global F11 Fullscreen Listener
   window.addEventListener('keydown', async (e) => {
-    if (e.ctrlKey && e.key === 'F11') {
+    if (e.key === 'F11') {
       e.preventDefault();
-      e.stopPropagation(); // Stop propagation
-      const isFullscreen = await appWindow.isFullscreen();
-      await appWindow.setFullscreen(!isFullscreen);
+      await toggleFullscreen();
     }
-  }, true); // Use capture phase
+  });
 });
 
 const baseMenuItems = computed(() => [
@@ -234,6 +249,7 @@ body {
 
 .app-layout {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   background: rgba(5, 5, 5, 0.95); /* Semi-transparent background */
   border: 1px solid #333; /* Cyberpunk border */
@@ -242,20 +258,71 @@ body {
   position: relative;
 }
 
-.drag-region {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 30px;
+.title-bar {
+  height: 32px;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-bottom: 1px solid #333;
   z-index: 9999;
-  -webkit-app-region: drag;
-  background: rgba(255, 255, 255, 0.02); /* Slight visibility for debug/UX */
+  user-select: none;
+}
+
+.drag-area {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
   cursor: move;
 }
 
-.drag-region:hover {
-  background: rgba(255, 255, 255, 0.05);
+.app-title {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #00e5ff;
+  font-size: 12px;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+
+.title-controls {
+  display: flex;
+  gap: 0;
+  z-index: 10000;
+  /* Ensure buttons are clickable */
+}
+
+.title-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+}
+
+.title-btn:hover {
+  background: #222;
+  color: #fff;
+}
+
+.title-btn.close:hover {
+  background: #ff003c;
+  color: #fff;
+}
+
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 .content-area {
@@ -263,7 +330,7 @@ body {
   overflow-y: auto;
   position: relative;
   background: radial-gradient(circle at top right, #1a1a1a, #000);
-  padding-top: 30px; /* Space for drag region */
+  padding-top: 0;
 }
 
 .bottom-controls {
