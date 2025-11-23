@@ -57,8 +57,12 @@ Log-Message "正在同步版本号到 tauri.conf.json..."
 node -e "const fs = require('fs'); const tauriPath = 'src-tauri/tauri.conf.json'; const pkg = require('./package.json'); const tauri = JSON.parse(fs.readFileSync(tauriPath, 'utf8')); tauri.package.version = pkg.version; fs.writeFileSync(tauriPath, JSON.stringify(tauri, null, 2));" 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
 
 # 4. 提交版本号变更
+# 临时允许 stderr 输出 (git warning 会被视为 error 如果是 Stop 模式)
+$prevErrorAction = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 git add package.json package-lock.json src-tauri/tauri.conf.json 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
 git commit -m "chore: bump version to $newVersion" 2>&1 | Out-File -FilePath $LogFile -Append -Encoding utf8
+$ErrorActionPreference = $prevErrorAction
 
 # 5. 设置签名密钥
 if (Test-Path "tauri.key") {
