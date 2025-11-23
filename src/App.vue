@@ -84,8 +84,12 @@ const minimizeApp = async () => {
 };
 
 const toggleFullscreen = async () => {
-  const isFullscreen = await appWindow.isFullscreen();
-  await appWindow.setFullscreen(!isFullscreen);
+  try {
+    const isFullscreen = await appWindow.isFullscreen();
+    await appWindow.setFullscreen(!isFullscreen);
+  } catch (e) {
+    console.error('Failed to toggle fullscreen:', e);
+  }
 };
 
 // const openSettings = async () => { ... } // Removed
@@ -246,6 +250,12 @@ body {
   height: 30px;
   z-index: 9999;
   -webkit-app-region: drag;
+  background: rgba(255, 255, 255, 0.02); /* Slight visibility for debug/UX */
+  cursor: move;
+}
+
+.drag-region:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .content-area {
