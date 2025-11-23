@@ -29,6 +29,18 @@
           {{ $t('features.start') }}
         </button>
       </div>
+
+      <div class="cp-card">
+        <div class="cp-label">{{ $t('features.cyberpunk') }}</div>
+        <div class="desc-text">{{ $t('features.cyberpunkDesc') }}</div>
+        <button class="cp-button primary" @click="startFakeMode('cyberpunk')">
+          {{ $t('features.start') }}
+        </button>
+      </div>
+    </div>
+
+    <div class="f11-hint">
+      <span v-html="$t('features.f11Hint').replace('Ctrl + F11', '<span class=\'key\'>Ctrl + F11</span>')"></span>
     </div>
 
     <!-- Overlays -->
@@ -66,6 +78,14 @@
         </div>
       </div>
     </div>
+
+    <div v-if="mode === 'cyberpunk'" class="overlay cyberpunk-overlay">
+      <div class="cp-bg-anim"></div>
+      <div class="cp-content">
+        <h1 class="glitch" data-text="NEKO233">NEKO233</h1>
+        <div class="scanner-line"></div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -73,11 +93,11 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { appWindow } from '@tauri-apps/api/window';
 
-const mode = ref<'none' | 'shutdown' | 'update' | 'bsod'>('none');
+const mode = ref<'none' | 'shutdown' | 'update' | 'bsod' | 'cyberpunk'>('none');
 const updateProgress = ref(0);
 let progressInterval: any = null;
 
-function startFakeMode(m: 'shutdown' | 'update' | 'bsod') {
+function startFakeMode(m: 'shutdown' | 'update' | 'bsod' | 'cyberpunk') {
   mode.value = m;
   appWindow.setFullscreen(true);
   updateProgress.value = 0;
@@ -100,8 +120,19 @@ function exitFakeMode() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    exitFakeMode();
+  if (e.ctrlKey && e.key === 'F11') {
+    e.preventDefault(); // Prevent default browser F11
+    if (mode.value !== 'none') {
+      exitFakeMode();
+    } else {
+      appWindow.isFullscreen().then(isFull => {
+        appWindow.setFullscreen(!isFull);
+      });
+    }
+  } else if (e.key === 'Escape') {
+    if (mode.value !== 'none') {
+      exitFakeMode();
+    }
   }
 }
 
@@ -116,6 +147,83 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ... existing styles ... */
+.f11-hint {
+  margin-top: 20px;
+  text-align: center;
+  color: #555;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  border: 1px dashed #333;
+  padding: 10px;
+}
+
+.f11-hint .key {
+  color: var(--cp-primary);
+  border: 1px solid var(--cp-primary);
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.cyberpunk-overlay {
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+}
+
+.cp-bg-anim {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(90deg, rgba(0,243,255,0.03) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0,243,255,0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(50px); }
+}
+
+.cp-content h1 {
+  font-size: 5em;
+  color: var(--cp-primary);
+  text-shadow: 2px 2px #ff003c;
+  position: relative;
+}
+
+.scanner-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: var(--cp-primary);
+  box-shadow: 0 0 15px var(--cp-primary);
+  opacity: 0.5;
+  animation: scan 3s ease-in-out infinite;
+}
+
+@keyframes scan {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
 .desc-text {
   margin: 10px 0;
   color: #aaa;

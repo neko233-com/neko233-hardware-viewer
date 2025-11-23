@@ -34,6 +34,58 @@
       </div>
     </div>
 
+    <!-- System Performance Section -->
+    <div class="cp-section">
+      <div class="cp-section-title">{{ $t('optimization.performanceTitle') }}</div>
+      <div class="cp-grid">
+        
+        <!-- Processor Optimization -->
+        <div class="cp-card">
+          <div class="cp-label">{{ $t('optimization.processor') }}</div>
+          <div class="cp-value">{{ $t('optimization.processorDesc') }}</div>
+          <div class="actions">
+            <button class="cp-btn" @click="runOptimization('optimize_processor')" :disabled="loading">
+              {{ $t('optimization.apply') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- High Performance Power Plan -->
+        <div class="cp-card">
+          <div class="cp-label">{{ $t('optimization.powerPlan') }}</div>
+          <div class="cp-value">{{ $t('optimization.powerPlanDesc') }}</div>
+          <div class="actions">
+            <button class="cp-btn" @click="runOptimization('enable_high_perf_plan')" :disabled="loading">
+              {{ $t('optimization.enable') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- File System Cache -->
+        <div class="cp-card">
+          <div class="cp-label">{{ $t('optimization.fsCache') }}</div>
+          <div class="cp-value">{{ $t('optimization.fsCacheDesc') }}</div>
+          <div class="actions">
+            <button class="cp-btn" @click="runOptimization('increase_fs_cache')" :disabled="loading">
+              {{ $t('optimization.apply') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Large System Cache -->
+        <div class="cp-card">
+          <div class="cp-label">{{ $t('optimization.sysCache') }}</div>
+          <div class="cp-value">{{ $t('optimization.sysCacheDesc') }}</div>
+          <div class="actions">
+            <button class="cp-btn" @click="runOptimization('enable_large_system_cache')" :disabled="loading">
+              {{ $t('optimization.enable') }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <div v-if="message" class="cp-message">{{ message }}</div>
   </div>
 </template>
@@ -53,6 +105,19 @@ const fetchStatus = async () => {
     cortanaStatus.value = await invoke('get_cortana_status');
   } catch (e) {
     console.error(e);
+  }
+};
+
+const runOptimization = async (command: string) => {
+  loading.value = true;
+  message.value = '';
+  try {
+    const res: string = await invoke(command);
+    message.value = res;
+  } catch (e) {
+    message.value = 'Error: ' + e;
+  } finally {
+    loading.value = false;
   }
 };
 

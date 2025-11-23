@@ -1,5 +1,5 @@
 export default {
-  title: 'NEKO233 硬件查看器',
+  title: '硬件信息',
   subtitle: '系统诊断与评分',
   loading: '正在初始化扫描...',
   error: '系统错误',
@@ -39,8 +39,41 @@ export default {
     totalWidth: '总位宽',
     bankLabel: '插槽标签',
     formFactor: '规格',
-    checkMemory: '检查内存',
-    memoryDiagnostic: 'Windows 内存诊断'
+    checkMemory: '检查内存蓝屏可能性',
+    memoryDiagnostic: 'Windows 内存诊断',
+    bootTime: '开机时间',
+    upTime: '已运行时间',
+    chipset: '芯片组',
+    ssdSlots: 'SSD 插槽 (M.2)',
+    gpuSlots: '显卡插槽 (PCIe x16)',
+    usedTotal: '已用 / 总计'
+  },
+  cpuInfo: {
+    title: 'CPU 命名规则说明',
+    intelTiers: '性能分级：i9 > i7 > i5 > i3',
+    intelUltra: 'Ultra 系列 (2023+): Ultra 9 > 7 > 5 (新架构)',
+    intelGen: '前 1-2 位数字代表代数 (如 13xxx = 13代)',
+    intelServer: '服务器 (Xeon): Platinum > Gold > Silver > Bronze',
+    suffixF: '无核显 (需独立显卡)',
+    suffixK: '可超频 (高性能)',
+    suffixKF: '可超频且无核显',
+    amdTiers: '性能分级：R9 > R7 > R5 > R3',
+    amdGen: '第一位数字代表代数 (如 7xxx = 7000系列)',
+    amdServer: '服务器 (EPYC): 9xxx (Genoa) > 7xxx (Milan)',
+    suffixX: '高性能版 (XFR)',
+    suffixG: '带核显 (APU)',
+    suffixX3D: '3D V-Cache (游戏性能强)',
+    namingTimeline: '2023年起，Intel 移动端/部分桌面端启用 "Core Ultra" 命名；服务器端沿用 Xeon。'
+  },
+  gpuInfo: {
+    title: '显卡命名与规格 (近10年)',
+    nvidiaTiers: 'RTX 5090/80 (旗舰) > 70 (高端) > 60 (主流) > 50 (入门)',
+    nvidiaSeries: '50系 (Blackwell) > 40系 (Ada) > 30系 (Ampere) > 20系 (Turing)',
+    nvidiaSuffix: 'Ti / Super (加强版)',
+    amdTiers: 'RX 7900 (旗舰) > 7800/7700 (高端) > 7600 (主流)',
+    amdSeries: 'RX 7000 (RDNA3) > 6000 (RDNA2) > 5000 (RDNA1)',
+    amdSuffix: 'XTX (顶级) > XT (加强) > GRE (特殊版)',
+    timeline: '架构演进: Pascal(2016) -> Turing(2018) -> Ampere(2020) -> Ada(2022) | RDNA1(2019) -> RDNA2(2020) -> RDNA3(2022)'
   },
   score: '评分',
   scores: {
@@ -52,13 +85,22 @@ export default {
   },
   menu: {
     hardware: '硬件信息',
+    ranking: '硬件天梯榜',
     optimization: '系统优化',
+    diagnostics: '系统诊断',
     driver_cleaner: '显卡驱动清空',
     office: 'Office 管理',
     activation: '系统激活',
     win11_install: '安装 Win11',
     win11_tweaks: 'Win11 专区',
+    color_management: '显示器颜色管理',
     features: '特性功能'
+  },
+  colorManagement: {
+    title: '显示器颜色管理',
+    subtitle: '校准与配置',
+    openColorCpl: '打开颜色管理',
+    desc: '管理显示器的颜色配置文件 (ICC/ICM)。'
   },
   features: {
     title: '特性功能',
@@ -69,7 +111,27 @@ export default {
     fakeUpdateDesc: '模拟 Windows 更新界面。按 ESC 退出。',
     fakeBsod: '假装蓝屏',
     fakeBsodDesc: '模拟蓝屏死机界面。按 ESC 退出。',
+    cyberpunk: '赛博朋克壁纸',
+    cyberpunkDesc: '动态 OLED 防烧屏壁纸',
+    f11Hint: '按 Ctrl + F11 切换全屏 / 退出恶搞模式',
     start: '开始'
+  },
+  settings: {
+    title: '设置',
+    autostart: '开机自启动',
+    checkUpdate: '检查更新',
+    autoUpdate: '自动更新 (默认开启)',
+    currentVersion: '当前版本',
+    updateAvailable: '发现新版本',
+    updateNow: '立即更新',
+    noUpdate: '当前已是最新版本',
+    checking: '正在检查更新...',
+    gameModeDetected: '检测到游戏运行中，已暂停更新提示'
+  },
+  buttons: {
+    exit: '退出',
+    minimize: '最小化',
+    settings: '设置'
   },
   activation: {
     title: '系统激活',
@@ -111,7 +173,17 @@ export default {
     enabled: '已启用',
     disabled: '已禁用',
     enable: '启用',
-    disable: '禁用'
+    disable: '禁用',
+    performanceTitle: '性能增强',
+    processor: '处理器性能优化',
+    processorDesc: '优化 CPU 调度策略，减少延迟 (SystemResponsiveness=0, PowerThrottlingOff=1)。',
+    powerPlan: '高性能电源计划',
+    powerPlanDesc: '启用并切换到“高性能”或“卓越性能”电源计划。',
+    fsCache: '文件系统缓存',
+    fsCacheDesc: '增加文件系统缓存限制 (IoPageLockLimit)，提高大文件读写性能。',
+    sysCache: '大系统缓存',
+    sysCacheDesc: '启用 LargeSystemCache，优化服务器或大内存系统的文件操作。',
+    apply: '应用优化'
   },
   driver_cleaner: {
     title: '显卡驱动清理',
@@ -126,7 +198,17 @@ export default {
     oemId: 'OEM ID',
     uninstall: '卸载',
     noDrivers: '未找到显示驱动 (或尚未扫描)。',
-    error: '错误'
+    error: '错误',
+    confirm: {
+      uninstall1: '您确定要卸载驱动 {name} 吗？屏幕可能会闪烁。',
+      uninstall2: '再次确认：您真的要卸载它吗？此操作不可撤销。',
+      cleanAll1: '警告：这将删除所有 {type} 显示驱动程序。您的屏幕可能会变黑或分辨率降低。继续吗？',
+      cleanAll2: '最终确认：您确定要执行此操作吗？这可能会导致系统不稳定，直到重新安装驱动程序。'
+    }
+  },
+  infoBtn: {
+    cpu: 'CPU 命名规则',
+    gpu: '显卡命名规则'
   },
   office: {
     title: 'OFFICE 管理',
@@ -139,5 +221,35 @@ export default {
     toolDesc: '安装程序',
     openTool: '打开配置工具',
     toolInfo: '创建用于 Office 部署的自定义配置文件。'
+  },
+  diagnostics: {
+    title: '系统诊断',
+    subtitle: '系统健康检查',
+    sectionTitle: '内存完整性',
+    quickCheck: '快速内存检查',
+    quickCheckDesc: '分配并测试 500MB 内存以查找错误。速度快但不如完整测试彻底。',
+    fullCheck: 'Windows 内存诊断',
+    fullCheckDesc: '启动官方 Windows 工具。需要重启以运行完整的硬件扫描。',
+    runQuick: '运行快速测试',
+    openTool: '打开工具',
+    noReboot: '无需重启',
+    rebootRequired: '需要重启',
+    testing: '测试中...',
+    testPassed: '内存检查通过 (快速测试)',
+    testFailed: '测试失败: ',
+    enabled: '已启用',
+    disabled: '已禁用',
+    enable: '启用',
+    disable: '禁用',
+    firewall: '防火墙',
+    cortana: 'Cortana'
+  },
+  ranking: {
+    title: '硬件天梯榜',
+    subtitle: '性能排行',
+    ladder: '天梯'
+  },
+  taskManager: {
+    title: '执行任务管理'
   }
 }

@@ -51,6 +51,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api/tauri';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 interface DriverInfo {
   published_name: string;
@@ -81,7 +84,8 @@ const scanDrivers = async () => {
 };
 
 const uninstall = async (id: string) => {
-  if (!confirm(`Are you sure you want to uninstall driver ${id}? Screen may flicker.`)) return;
+  if (!confirm(t('driver_cleaner.confirm.uninstall1', { name: id }))) return;
+  if (!confirm(t('driver_cleaner.confirm.uninstall2'))) return;
   
   loading.value = true;
   try {
@@ -95,7 +99,8 @@ const uninstall = async (id: string) => {
 };
 
 const cleanAll = async (type: 'nvidia' | 'amd') => {
-  if (!confirm(`WARNING: This will remove ALL ${type.toUpperCase()} display drivers. Your screen may go black or resolution may drop. Continue?`)) return;
+  if (!confirm(t('driver_cleaner.confirm.cleanAll1', { type: type.toUpperCase() }))) return;
+  if (!confirm(t('driver_cleaner.confirm.cleanAll2'))) return;
 
   const targets = drivers.value.filter(d => {
     const p = d.provider_name.toLowerCase();

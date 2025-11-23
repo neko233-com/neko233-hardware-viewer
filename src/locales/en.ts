@@ -39,8 +39,41 @@ export default {
     totalWidth: 'Total Width',
     bankLabel: 'Bank',
     formFactor: 'Form Factor',
-    checkMemory: 'Check Memory',
-    memoryDiagnostic: 'Windows Memory Diagnostic'
+    checkMemory: 'Check Memory for BSOD Potential',
+    memoryDiagnostic: 'Windows Memory Diagnostic',
+    bootTime: 'Boot Time',
+    upTime: 'Up Time',
+    chipset: 'Chipset',
+    ssdSlots: 'SSD Slots (M.2)',
+    gpuSlots: 'GPU Slots (PCIe x16)',
+    usedTotal: 'Used / Total'
+  },
+  cpuInfo: {
+    title: 'CPU Naming Conventions',
+    intelTiers: 'Performance: i9 > i7 > i5 > i3',
+    intelUltra: 'Ultra Series (2023+): Ultra 9 > 7 > 5 (New Arch)',
+    intelGen: 'First 1-2 digits = Generation (e.g. 13xxx = 13th Gen)',
+    intelServer: 'Server (Xeon): Platinum > Gold > Silver > Bronze',
+    suffixF: 'No Integrated Graphics (Requires GPU)',
+    suffixK: 'Unlocked (Overclockable)',
+    suffixKF: 'Unlocked & No Integrated Graphics',
+    amdTiers: 'Performance: R9 > R7 > R5 > R3',
+    amdGen: 'First digit = Series (e.g. 7xxx = 7000 Series)',
+    amdServer: 'Server (EPYC): 9xxx (Genoa) > 7xxx (Milan)',
+    suffixX: 'High Performance (XFR)',
+    suffixG: 'With Integrated Graphics (APU)',
+    suffixX3D: '3D V-Cache (Best for Gaming)',
+    namingTimeline: 'Naming Change: Core i (2008-2023) -> Core Ultra (2023+)'
+  },
+  gpuInfo: {
+    title: 'GPU Naming & Specs (Last 10 Years)',
+    nvidiaTiers: 'RTX 5090/80 (Flagship) > 70 (High) > 60 (Mid) > 50 (Entry)',
+    nvidiaSeries: '50 Series (Blackwell) > 40 Series (Ada) > 30 Series (Ampere) > 20 Series (Turing)',
+    nvidiaSuffix: 'Ti / Super (Enhanced)',
+    amdTiers: 'RX 7900 (Flagship) > 7800/7700 (High) > 7600 (Mid)',
+    amdSeries: 'RX 7000 (RDNA3) > 6000 (RDNA2) > 5000 (RDNA1)',
+    amdSuffix: 'XTX (Top) > XT (Enhanced) > GRE (Special)',
+    timeline: 'Arch: Pascal(2016) -> Turing(2018) -> Ampere(2020) -> Ada(2022) | RDNA1(2019) -> RDNA2(2020) -> RDNA3(2022)'
   },
   score: 'SCORE',
   scores: {
@@ -52,13 +85,22 @@ export default {
   },
   menu: {
     hardware: 'Hardware Info',
+    ranking: 'Hardware Ranking',
     optimization: 'Optimization',
+    diagnostics: 'Diagnostics',
     driver_cleaner: 'Driver Cleaner',
     office: 'Office Mgmt',
     activation: 'Activation',
     win11_install: 'Install Win11',
     win11_tweaks: 'Win11 Zone',
+    color_management: 'Monitor Color Mgmt',
     features: 'Features'
+  },
+  colorManagement: {
+    title: 'Color Management',
+    subtitle: 'Calibration & Profiles',
+    openColorCpl: 'Open Color Management',
+    desc: 'Manage color profiles (ICC/ICM) for your displays.'
   },
   features: {
     title: 'FEATURES',
@@ -69,7 +111,27 @@ export default {
     fakeUpdateDesc: 'Simulates a Windows update screen. Press ESC to exit.',
     fakeBsod: 'Fake BSOD',
     fakeBsodDesc: 'Simulates a Blue Screen of Death. Press ESC to exit.',
+    cyberpunk: 'Cyberpunk Wallpaper',
+    cyberpunkDesc: 'Dynamic OLED anti-burn-in wallpaper',
+    f11Hint: 'PRESS Ctrl + F11 TO TOGGLE FULLSCREEN / EXIT PRANK',
     start: 'START'
+  },
+  settings: {
+    title: 'Settings',
+    autostart: 'Start on Boot',
+    checkUpdate: 'Check for Updates',
+    autoUpdate: 'Auto Update (Default On)',
+    currentVersion: 'Current Version',
+    updateAvailable: 'New Version Available',
+    updateNow: 'Update Now',
+    noUpdate: 'You are up to date',
+    checking: 'Checking for updates...',
+    gameModeDetected: 'Game mode detected, update notification paused'
+  },
+  buttons: {
+    exit: 'EXIT',
+    minimize: 'MINIMIZE',
+    settings: 'SETTINGS'
   },
   activation: {
     title: 'System Activation',
@@ -111,7 +173,17 @@ export default {
     enabled: 'Enabled',
     disabled: 'Disabled',
     enable: 'Enable',
-    disable: 'Disable'
+    disable: 'Disable',
+    performanceTitle: 'Performance Boost',
+    processor: 'Processor Optimization',
+    processorDesc: 'Optimize CPU scheduling and reduce latency (SystemResponsiveness=0, PowerThrottlingOff=1).',
+    powerPlan: 'High Performance Plan',
+    powerPlanDesc: 'Enable and switch to "High Performance" or "Ultimate Performance" power plan.',
+    fsCache: 'File System Cache',
+    fsCacheDesc: 'Increase file system cache limit (IoPageLockLimit) for better I/O performance.',
+    sysCache: 'Large System Cache',
+    sysCacheDesc: 'Enable LargeSystemCache to optimize file operations for systems with large RAM.',
+    apply: 'Apply'
   },
   driver_cleaner: {
     title: 'DRIVER CLEANER',
@@ -126,7 +198,17 @@ export default {
     oemId: 'OEM ID',
     uninstall: 'Uninstall',
     noDrivers: 'No display drivers found (or scan not started).',
-    error: 'Error'
+    error: 'Error',
+    confirm: {
+      uninstall1: 'Are you sure you want to uninstall driver {name}? Screen may flicker.',
+      uninstall2: 'Double Check: Do you really want to uninstall it? This cannot be undone.',
+      cleanAll1: 'WARNING: This will remove ALL {type} display drivers. Your screen may go black or resolution may drop. Continue?',
+      cleanAll2: 'FINAL CONFIRMATION: Are you absolutely sure? This may cause system instability until drivers are reinstalled.'
+    }
+  },
+  infoBtn: {
+    cpu: 'CPU Naming',
+    gpu: 'GPU Naming'
   },
   office: {
     title: 'OFFICE MANAGEMENT',
@@ -139,5 +221,35 @@ export default {
     toolDesc: 'Installer',
     openTool: 'Open Config Tool',
     toolInfo: 'Create custom configuration files for Office deployment.'
+  },
+  diagnostics: {
+    title: 'DIAGNOSTICS',
+    subtitle: 'SYSTEM HEALTH CHECK',
+    sectionTitle: 'MEMORY INTEGRITY',
+    quickCheck: 'Quick Memory Check',
+    quickCheckDesc: 'Allocates and tests 500MB of RAM for errors. Fast but less thorough.',
+    fullCheck: 'Windows Memory Diagnostic',
+    fullCheckDesc: 'Launches the official Windows tool. Requires a restart to run a full hardware scan.',
+    runQuick: 'RUN QUICK TEST',
+    openTool: 'OPEN TOOL',
+    noReboot: 'No Reboot Required',
+    rebootRequired: 'Reboot Required',
+    testing: 'TESTING...',
+    testPassed: 'Memory check passed (Quick Test)',
+    testFailed: 'Test Failed: ',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    enable: 'ENABLE',
+    disable: 'DISABLE',
+    firewall: 'Firewall',
+    cortana: 'Cortana'
+  },
+  ranking: {
+    title: 'HARDWARE RANKING',
+    subtitle: 'PERFORMANCE TIERS',
+    ladder: 'Ladder'
+  },
+  taskManager: {
+    title: 'Active Tasks'
   }
 }

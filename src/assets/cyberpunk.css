@@ -1,18 +1,47 @@
 /* Cyberpunk Theme */
 :root {
-  --cp-bg-color: #050505;
-  --cp-panel-bg: #111;
+  --cp-bg-color: #050510; /* Deep Dark Blue */
+  --cp-panel-bg: #0a0a12;
   --cp-text-color: #e0e0e0;
   --cp-primary: #00f3ff; /* Cyan */
   --cp-secondary: #ff0055; /* Pink */
+  --cp-tertiary: #bc13fe; /* Neon Purple */
   --cp-accent: #fcee0a; /* Yellow */
+  --cp-success: #39ff14; /* Neon Green */
   --cp-border: #333;
 }
 
 body {
   background-color: var(--cp-bg-color) !important;
+  background-image: 
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+    linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 2px, 3px 100%;
   color: var(--cp-text-color) !important;
   font-family: 'Courier New', Courier, monospace !important; /* Terminal feel */
+  overflow-x: hidden; /* Disable horizontal scroll */
+}
+
+/* Cyberpunk Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cp-bg-color);
+  border-left: 1px solid var(--cp-border);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cp-border);
+  border: 1px solid var(--cp-tertiary);
+  box-shadow: 0 0 5px var(--cp-tertiary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cp-tertiary);
+  box-shadow: 0 0 10px var(--cp-tertiary);
 }
 
 .cp-container {
@@ -48,7 +77,7 @@ body {
   margin-bottom: 30px;
   padding: 20px;
   position: relative;
-  box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+  box-shadow: 0 0 15px rgba(188, 19, 254, 0.1); /* Purple tint */
 }
 
 .cp-section::before {
@@ -58,16 +87,17 @@ body {
   left: 0;
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, var(--cp-primary), transparent);
+  background: linear-gradient(90deg, var(--cp-primary), var(--cp-tertiary), transparent);
 }
 
 .cp-section-title {
   color: var(--cp-accent);
   font-size: 1.5em;
   margin-bottom: 20px;
-  border-left: 4px solid var(--cp-secondary);
+  border-left: 4px solid var(--cp-tertiary); /* Changed to Purple */
   padding-left: 15px;
   text-transform: uppercase;
+  text-shadow: 0 0 5px rgba(252, 238, 10, 0.3);
 }
 
 .cp-grid {
@@ -77,21 +107,42 @@ body {
 }
 
 .cp-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--cp-primary);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--cp-border);
+  border-left: 2px solid var(--cp-primary);
   padding: 15px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 2px;
+  background: var(--cp-tertiary);
+  transition: width 0.3s ease;
 }
 
 .cp-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 10px var(--cp-primary);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  border-color: var(--cp-tertiary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cp-card:hover::after {
+  width: 100%;
 }
 
 .cp-label {
-  color: #888;
+  color: #aaa;
   font-size: 0.8em;
   text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .cp-value {
@@ -99,6 +150,7 @@ body {
   font-size: 1.1em;
   margin-bottom: 10px;
   font-weight: bold;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 .cp-score {
@@ -108,10 +160,10 @@ body {
   margin-top: 10px;
 }
 
-.score-excellent { color: #0f0; text-shadow: 0 0 5px #0f0; }
-.score-good { color: var(--cp-primary); }
-.score-average { color: var(--cp-accent); }
-.score-poor { color: var(--cp-secondary); }
+.score-excellent { color: var(--cp-success); text-shadow: 0 0 8px var(--cp-success); }
+.score-good { color: var(--cp-primary); text-shadow: 0 0 5px var(--cp-primary); }
+.score-average { color: var(--cp-accent); text-shadow: 0 0 5px var(--cp-accent); }
+.score-poor { color: var(--cp-secondary); text-shadow: 0 0 5px var(--cp-secondary); }
 .score-unknown { color: #888; }
 
 .loading-text {

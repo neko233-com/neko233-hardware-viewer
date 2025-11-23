@@ -23,6 +23,14 @@
             <div class="usage-fill" :style="{ width: (usage.memory_used / usage.memory_total * 100) + '%' }"></div>
           </div>
         </div>
+        <div class="cp-card">
+          <div class="cp-label">{{ $t('labels.bootTime') }}</div>
+          <div class="cp-value">{{ formatBootTime(bootTime) }}</div>
+        </div>
+        <div class="cp-card">
+          <div class="cp-label">{{ $t('labels.upTime') }}</div>
+          <div class="cp-value">{{ formatUptime(uptime) }}</div>
+        </div>
       </div>
     </div>
 
@@ -45,8 +53,24 @@
             <div class="cp-value">{{ mobo.Manufacturer }}</div>
             <div class="cp-label">{{ $t('labels.product') }}</div>
             <div class="cp-value">{{ mobo.Product }}</div>
+            <div class="cp-label">{{ $t('labels.chipset') }}</div>
+            <div class="cp-value">{{ mobo.Chipset }}</div>
             <div class="cp-label">{{ $t('labels.version') }}</div>
             <div class="cp-value">{{ mobo.Version }}</div>
+            
+            <!-- Slots Info -->
+            <div class="cp-label">{{ $t('labels.ssdSlots') }}</div>
+            <div class="cp-value">{{ mobo.SsdSlots.used }} / {{ mobo.SsdSlots.total }} ({{ $t('labels.usedTotal') }})</div>
+            <div class="slot-details" v-if="mobo.SsdSlots.details.length > 0">
+              <div v-for="detail in mobo.SsdSlots.details" :key="detail" class="slot-item">{{ detail }}</div>
+            </div>
+
+            <div class="cp-label">{{ $t('labels.gpuSlots') }}</div>
+            <div class="cp-value">{{ mobo.GpuSlots.used }} / {{ mobo.GpuSlots.total }} ({{ $t('labels.usedTotal') }})</div>
+            <div class="slot-details" v-if="mobo.GpuSlots.details.length > 0">
+              <div v-for="detail in mobo.GpuSlots.details" :key="detail" class="slot-item">{{ detail }}</div>
+            </div>
+
             <a v-if="getDriverLink(mobo.Manufacturer, mobo.Product)" :href="getDriverLink(mobo.Manufacturer, mobo.Product) || undefined" target="_blank" class="driver-link">
               {{ $t('labels.downloadDriver') }}
             </a>
@@ -56,7 +80,12 @@
 
       <!-- CPU -->
       <div class="cp-section">
-        <div class="cp-section-title">{{ $t('sections.cpu') }}</div>
+        <div class="cp-section-title">
+          {{ $t('sections.cpu') }}
+          <button class="cp-icon-btn" @click="showCpuInfo = true" :title="$t('infoBtn.cpu')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          </button>
+        </div>
         <div class="cp-grid">
           <div v-for="(cpu, index) in info.cpu" :key="index" class="cp-card">
             <div class="cp-label">{{ $t('labels.model') }}</div>
@@ -79,7 +108,12 @@
 
       <!-- GPU -->
       <div class="cp-section">
-        <div class="cp-section-title">{{ $t('sections.gpu') }}</div>
+        <div class="cp-section-title">
+          {{ $t('sections.gpu') }}
+          <button class="cp-icon-btn" @click="showGpuInfo = true" :title="$t('infoBtn.gpu')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          </button>
+        </div>
         <div class="cp-grid">
           <div v-for="(gpu, index) in info.gpu" :key="index" class="cp-card">
             <div class="cp-label">{{ $t('labels.model') }}</div>
@@ -197,6 +231,84 @@
       </div>
 
     </div>
+
+    <!-- CPU Info Modal -->
+    <div v-if="showCpuInfo" class="modal-overlay" @click.self="showCpuInfo = false">
+      <div class="modal-content">
+        <button class="close-btn" @click="showCpuInfo = false">×</button>
+        <h2>{{ $t('cpuInfo.title') }}</h2>
+        
+        <div class="info-block">
+          <h3>Intel</h3>
+          <p><strong>Core i3/i5/i7/i9:</strong> {{ $t('cpuInfo.intelTiers') }}</p>
+          <p><strong>Core Ultra:</strong> {{ $t('cpuInfo.intelUltra') }}</p>
+          <p><strong>Generation:</strong> {{ $t('cpuInfo.intelGen') }}</p>
+          <p><strong>Server:</strong> {{ $t('cpuInfo.intelServer') }}</p>
+          <p><strong>Suffixes:</strong></p>
+          <ul>
+            <li><strong>F:</strong> {{ $t('cpuInfo.suffixF') }}</li>
+            <li><strong>K:</strong> {{ $t('cpuInfo.suffixK') }}</li>
+            <li><strong>KF:</strong> {{ $t('cpuInfo.suffixKF') }}</li>
+          </ul>
+        </div>
+
+        <div class="info-block">
+          <h3>AMD</h3>
+          <p><strong>Ryzen 3/5/7/9:</strong> {{ $t('cpuInfo.amdTiers') }}</p>
+          <p><strong>Generation:</strong> {{ $t('cpuInfo.amdGen') }}</p>
+          <p><strong>Server:</strong> {{ $t('cpuInfo.amdServer') }}</p>
+          <p><strong>Suffixes:</strong></p>
+          <ul>
+            <li><strong>X:</strong> {{ $t('cpuInfo.suffixX') }}</li>
+            <li><strong>G:</strong> {{ $t('cpuInfo.suffixG') }}</li>
+            <li><strong>X3D:</strong> {{ $t('cpuInfo.suffixX3D') }}</li>
+          </ul>
+        </div>
+
+        <div class="info-block" style="border-top: 1px dashed #333; padding-top: 10px;">
+          <p><strong>Timeline:</strong> {{ $t('cpuInfo.namingTimeline') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GPU Info Modal -->
+    <div v-if="showGpuInfo" class="modal-overlay" @click.self="showGpuInfo = false">
+      <div class="modal-content wide-modal">
+        <button class="close-btn" @click="showGpuInfo = false">×</button>
+        <h2>{{ $t('gpuInfo.title') }}</h2>
+        
+        <div class="table-container">
+          <table class="info-table">
+            <thead>
+              <tr>
+                <th>Brand</th>
+                <th>Tiers</th>
+                <th>Series</th>
+                <th>Suffixes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="brand-nvidia">NVIDIA</td>
+                <td>{{ $t('gpuInfo.nvidiaTiers') }}</td>
+                <td>{{ $t('gpuInfo.nvidiaSeries') }}</td>
+                <td>{{ $t('gpuInfo.nvidiaSuffix') }}</td>
+              </tr>
+              <tr>
+                <td class="brand-amd">AMD</td>
+                <td>{{ $t('gpuInfo.amdTiers') }}</td>
+                <td>{{ $t('gpuInfo.amdSeries') }}</td>
+                <td>{{ $t('gpuInfo.amdSuffix') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="info-block" style="border-top: 1px dashed #333; padding-top: 10px; margin-top: 15px;">
+          <p><strong>Timeline:</strong> {{ $t('gpuInfo.timeline') }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -209,7 +321,24 @@ const loading = ref(true);
 const error = ref('');
 const info = ref<any>(null);
 const usage = ref({ cpu_usage: 0, memory_used: 0, memory_total: 1 });
+const showCpuInfo = ref(false);
+const showGpuInfo = ref(false);
+const bootTime = ref(0);
+const uptime = ref(0);
 let usageInterval: any = null;
+
+const formatBootTime = (timestamp: number) => {
+  if (!timestamp) return '...';
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString();
+};
+
+const formatUptime = (seconds: number) => {
+  if (!seconds) return '...';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return `${h}h ${m}m`;
+};
 
 const getScoreClass = (score: string) => {
   // Remove quotes if present (format!("{:?}") adds quotes)
@@ -260,6 +389,8 @@ onMounted(async () => {
     const res = await invoke('get_hardware_info');
     console.log(res);
     info.value = res;
+    bootTime.value = await invoke('get_boot_time');
+    uptime.value = await invoke('get_uptime');
     
     // Start usage polling
     fetchUsage();
@@ -278,6 +409,32 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.cp-icon-btn {
+  background: rgba(0, 243, 255, 0.1);
+  border: 1px solid var(--cp-primary);
+  color: var(--cp-primary);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+  margin-left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  box-shadow: 0 0 5px var(--cp-primary);
+}
+
+.cp-icon-btn:hover {
+  background: var(--cp-primary);
+  color: #000;
+  box-shadow: 0 0 15px var(--cp-primary);
+  transform: scale(1.1);
+}
+
+
+
 .usage-bar {
   width: 100%;
   height: 6px;
@@ -354,5 +511,118 @@ onUnmounted(() => {
 .cp-btn-small:hover {
   background: var(--cp-primary);
   color: #000;
+}
+
+
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: #111;
+  border: 1px solid var(--cp-primary);
+  padding: 20px;
+  width: 500px;
+  max-width: 90%;
+  position: relative;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+  color: #eee;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+.info-block {
+  margin-bottom: 20px;
+}
+
+.info-block h3 {
+  color: var(--cp-primary);
+  border-bottom: 1px solid #333;
+  padding-bottom: 5px;
+}
+
+.info-block ul {
+  padding-left: 20px;
+  color: #ccc;
+}
+
+.info-block li {
+  margin-bottom: 5px;
+}
+
+.wide-modal {
+  width: 800px;
+  max-width: 95%;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-top: 15px;
+}
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.info-table th,
+.info-table td {
+  border: 1px solid #333;
+  padding: 10px;
+  text-align: left;
+}
+
+.info-table th {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--cp-primary);
+}
+
+.info-table td {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.brand-nvidia {
+  color: #76b900;
+  font-weight: bold;
+}
+
+.brand-amd {
+  color: #ff003c;
+  font-weight: bold;
+}
+
+.slot-details {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 5px;
+  padding-left: 10px;
+  border-left: 2px solid #333;
+}
+.slot-item {
+  margin-bottom: 2px;
 }
 </style>
