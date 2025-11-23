@@ -24,7 +24,8 @@
       "identifier": "com.neko233.hardwareviewer",
       "icon": [
         "icons/32x32.png",
-        "icons/128x128.png"
+        "icons/128x128.png",
+        "icons/icon.ico"
       ]
     },
     "security": {
