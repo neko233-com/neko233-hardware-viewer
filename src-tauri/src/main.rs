@@ -183,14 +183,31 @@ fn get_firewall_status() -> bool {
 #[tauri::command]
 fn set_firewall_status(enable: bool) -> Result<String, String> {
     let state = if enable { "on" } else { "off" };
+    
+    // Try netsh first
     let output = Command::new("netsh")
         .args(&["advfirewall", "set", "allprofiles", "state", state])
         .output()
         .map_err(|e| e.to_string())?;
     
+    // Also try Registry as fallback/reinforcement
+    let val: u32 = if enable { 1 } else { 0 };
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let profiles = ["StandardProfile", "PublicProfile", "DomainProfile"];
+    
+    for profile in profiles.iter() {
+        let path = format!("SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\{}", profile);
+        if let Ok((key, _)) = hklm.create_subkey(&path) {
+            let _ = key.set_value("EnableFirewall", &val);
+        }
+    }
+
     if output.status.success() {
         Ok(format!("Firewall turned {}", state))
     } else {
+        // If netsh failed, but we tried registry, we can report success with warning or just error.
+        // But usually if netsh fails, it's permission issue, so registry will likely fail too unless we are SYSTEM.
+        // However, we'll return the netsh error if it failed, as it's the most reliable indicator.
         Err(String::from_utf8_lossy(&output.stderr).to_string())
     }
 }
@@ -215,7 +232,17 @@ fn set_cortana_status(enable: bool) -> Result<String, String> {
     
     let val: u32 = if enable { 1 } else { 0 };
     key.set_value("AllowCortana", &val).map_err(|e| e.to_string())?;
+    key.set_value("AllowCloudSearch", &val).map_err(|e| e.to_string())?;
+    key.set_value("ConnectedSearchUseWeb", &val).map_err(|e| e.to_string())?;
     
+    // Also try to hide from taskbar (HKCU)
+    if !enable {
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        if let Ok((search_key, _)) = hkcu.create_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Search") {
+            let _ = search_key.set_value("SearchboxTaskbarMode", &0u32); // 0 = Hidden
+        }
+    }
+
     Ok(format!("Cortana {}", if enable { "enabled" } else { "disabled" }))
 }
 
@@ -436,11 +463,74 @@ fn restart_explorer() -> Result<String, String> {
 fn run_memory_diagnostic() -> Result<String, String> {
     // mdsched.exe is the Windows Memory Diagnostic tool
     // It usually requires admin privileges and shows a GUI
-    Command::new("mdsched.exe")
+    // Using cmd /c start to ensure it handles UAC/GUI properly
+    Command::new("cmd")
+        .args(&["/C", "start", "mdsched.exe"])
         .spawn()
         .map_err(|e| e.to_string())?;
 
     Ok("Success".to_string())
+}
+
+#[tauri::command]
+fn open_color_cpl() -> Result<String, String> {
+    Command::new("colorcpl.exe")
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok("Success".to_string())
+}
+
+#[tauri::command]
+fn set_autostart(enable: bool) -> Result<(), String> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let path = r"Software\Microsoft\Windows\CurrentVersion\Run";
+    let (key, _) = hkcu.create_subkey(path).map_err(|e| e.to_string())?;
+    
+    let app_name = "Neko233HardwareViewer";
+    
+    if enable {
+        let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
+        key.set_value(app_name, &exe_path.to_string_lossy().as_ref()).map_err(|e| e.to_string())?;
+    } else {
+        let _ = key.delete_value(app_name);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn check_autostart() -> bool {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let path = r"Software\Microsoft\Windows\CurrentVersion\Run";
+    if let Ok(key) = hkcu.open_subkey(path) {
+        let app_name = "Neko233HardwareViewer";
+        return key.get_value::<String, _>(app_name).is_ok();
+    }
+    false
+}
+
+#[tauri::command]
+fn is_game_running() -> bool {
+    use winapi::um::winuser::{GetForegroundWindow, GetWindowRect, GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
+    use winapi::shared::windef::RECT;
+    
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.is_null() { return false; }
+        
+        let mut rect: RECT = std::mem::zeroed();
+        if GetWindowRect(hwnd, &mut rect) == 0 { return false; }
+        
+        let screen_w = GetSystemMetrics(SM_CXSCREEN);
+        let screen_h = GetSystemMetrics(SM_CYSCREEN);
+        
+        let win_w = rect.right - rect.left;
+        let win_h = rect.bottom - rect.top;
+        
+        if win_w >= screen_w && win_h >= screen_h {
+            return true;
+        }
+    }
+    false
 }
 
 fn main() {
@@ -468,7 +558,11 @@ fn main() {
             set_show_extensions,
             set_show_hidden_files,
             restart_explorer,
-            run_memory_diagnostic
+            run_memory_diagnostic,
+            open_color_cpl,
+            set_autostart,
+            check_autostart,
+            is_game_running
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

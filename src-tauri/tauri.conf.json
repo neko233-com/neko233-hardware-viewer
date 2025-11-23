@@ -16,7 +16,18 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "updater": {
+        "all": true
       }
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/neko233-com/neko233-hardware-viewer/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": ""
     },
     "bundle": {
       "active": true,
@@ -37,7 +48,9 @@
         "resizable": true,
         "title": "Neko233 Hardware Viewer",
         "width": 1200,
-        "height": 800
+        "height": 800,
+        "decorations": false,
+        "transparent": true
       }
     ]
   }
