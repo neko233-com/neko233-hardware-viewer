@@ -1,75 +1,73 @@
-# Neko233 Hardware Viewer (Cyberpunk Edition)
+# Neko233 Hardware Viewer
 
-A modern, Cyberpunk-themed hardware diagnostic tool for Windows, built with **Rust**, **Tauri**, and **Vue 3**.
+A comprehensive system utility suite with a Cyberpunk aesthetic.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows-blue)
+## ✨ Feature List
 
-## ✨ Features
+### 🖥️ Hardware Info (硬件信息)
+| Feature | Description |
+| :--- | :--- |
+| **Real-time Monitor** | Live CPU & RAM usage tracking. |
+| **Motherboard** | Manufacturer, Model, Version, Serial Number. |
+| **CPU** | Name, Cores/Threads, Clock Speed, Performance Score. |
+| **GPU** | Model, VRAM, Driver Version, Performance Score. |
+| **RAM** | Capacity, Speed, Manufacturer, Part Number, Voltage, Width. |
+| **Storage** | Model, Capacity, Interface, Serial Number (Copyable). |
+| **Sound** | Audio device enumeration. |
+| **Driver Links** | Direct download links for major manufacturers. |
 
-- **Cyberpunk Aesthetic**: Dark mode, neon glows, and glitch effects.
-- **Comprehensive Hardware Scan**:
-  - **Motherboard**: Manufacturer, Model, Version, Serial.
-  - **CPU**: Name, Cores, Threads, Clock Speed, Scoring.
-  - **GPU**: Name, Driver, VRAM, Scoring.
-  - **RAM**: Capacity, Speed, Slot Information, Scoring.
-  - **Storage**: Model, Size, Interface, Scoring.
-  - **Audio**: Sound device enumeration.
-- **Performance Scoring**: Automatic grading (Excellent/Good/Average/Poor) based on hardware specs.
-- **Portable**: Single `.msi` installer or executable.
+### 🚀 Optimization (系统优化)
+| Feature | Description |
+| :--- | :--- |
+| **Windows Firewall** | Toggle Windows Firewall status (Enable/Disable). |
+| **Cortana** | Enable or Disable Cortana voice assistant. |
 
-## 🛠️ Tech Stack
+### 🧹 Driver Cleaner (显卡驱动清空)
+| Feature | Description |
+| :--- | :--- |
+| **Driver Scan** | Scan for installed NVIDIA and AMD display drivers. |
+| **NVIDIA Cleaner** | One-click uninstall for all NVIDIA drivers. |
+| **AMD Cleaner** | One-click uninstall for all AMD drivers. |
+| **DDU Lite** | Lightweight alternative to Display Driver Uninstaller. |
 
-- **Backend**: Rust (Tauri, WMI, Sysinfo)
-- **Frontend**: Vue 3, TypeScript, Vite
-- **Styling**: Custom CSS (Cyberpunk Theme)
+### 📝 Office Management (Office 管理)
+| Feature | Description |
+| :--- | :--- |
+| **Office Portal** | Quick access to Microsoft Office management portal. |
+| **Deployment Tool** | Quick access to Office Deployment Tool (ODT). |
 
-## 🚀 Getting Started
+### 🔑 Activation (系统激活)
+| Feature | Description |
+| :--- | :--- |
+| **Status Check** | View current Windows activation/license status. |
+| **Install Key** | Install a custom Windows Product Key. |
+| **Edition Switcher** | One-click switch to Pro, Home, Enterprise, Education editions. |
+| **Activate** | Trigger Windows activation (slmgr /ato). |
 
-### Prerequisites
+### 💿 Install Win11 (安装 Win11)
+| Feature | Description |
+| :--- | :--- |
+| **Bypass TPM/SecureBoot** | Apply registry hacks to install Win11 on unsupported hardware. |
+| **Official Download** | Direct link to Microsoft Windows 11 ISO download. |
 
-- **Node.js** (v16+)
-- **Rust** (latest stable)
-- **Visual Studio C++ Build Tools** (for Windows development)
+### ⚙️ Win11 Zone (Win11 专区)
+| Feature | Description |
+| :--- | :--- |
+| **Classic Context Menu** | Restore Windows 10 style right-click menu. |
+| **File Extensions** | Toggle visibility of file extensions. |
+| **Hidden Files** | Toggle visibility of hidden files. |
+| **Restart Explorer** | Instantly restart Windows Explorer to apply changes. |
 
-### Development
+### 🎭 Features (特性功能)
+| Feature | Description |
+| :--- | :--- |
+| **Fake Shutdown** | Simulate a realistic Windows shutdown screen. |
+| **Fake Update** | Simulate a realistic Windows update screen (Full screen). |
+| **Fake BSOD** | Simulate a Blue Screen of Death (BSOD). |
+| **Exit Mode** | Press **ESC** to exit any fake screen. |
 
-1. Install dependencies:
+---
 
-   ```powershell
-   npm install
-   ```
-
-2. Run in development mode:
-
-   ```powershell
-   npm run tauri dev
-   # Or use the helper script:
-   .\dev.cmd
-   ```
-
-### Build for Production
-
-To create a Windows installer (`.msi`):
-
-```powershell
-npm run tauri build
-# Or use the helper script:
-.\build-windows.cmd
-```
-
-The output will be in `src-tauri/target/release/bundle/msi/`.
-
-## 📂 Project Structure
-
-- `src-tauri/`: Rust backend code.
-  - `src/main.rs`: Main application logic and hardware detection commands.
-- `src/`: Vue frontend code.
-  - `components/HardwareView.vue`: Main UI component.
-  - `assets/cyberpunk.css`: Global styling.
-- `.github/workflows/`: CI/CD configuration for GitHub Actions.
-
-## 📝 License
-
-MIT License
+## 📦 Download & Install
+Check the [Releases](https://github.com/neko233-com/neko233-hardware-viewer/releases) page for the latest installer.
 

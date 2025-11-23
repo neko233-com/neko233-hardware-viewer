@@ -9,6 +9,8 @@ pub struct DiskInfo {
     pub size: Option<u64>,
     pub media_type: Option<String>,
     pub interface_type: Option<String>,
+    pub manufacturer: Option<String>,
+    pub serial_number: Option<String>,
 }
 
 pub fn get_disk_info(ctx: &HardwareContext) -> Result<Vec<DiskInfo>> {

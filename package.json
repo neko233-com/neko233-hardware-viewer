@@ -14,7 +14,8 @@
   "dependencies": {
     "@tauri-apps/api": "^1.5.3",
     "element-plus": "^2.5.6",
-    "vue": "^3.4.19"
+    "vue": "^3.4.19",
+    "vue-i18n": "^11.2.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.5.9",

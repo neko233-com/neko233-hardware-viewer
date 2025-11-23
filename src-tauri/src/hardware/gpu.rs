@@ -9,6 +9,7 @@ pub struct GpuInfo {
     pub driver_version: String,
     pub adapter_ram: Option<u64>,
     pub video_processor: Option<String>,
+    pub adapter_compatibility: Option<String>, // Manufacturer often here
 }
 
 pub fn get_gpu_info(ctx: &HardwareContext) -> Result<Vec<GpuInfo>> {
