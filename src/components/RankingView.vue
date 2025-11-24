@@ -22,12 +22,29 @@
       </button>
     </div>
 
+    <div class="search-bar">
+      <input 
+        v-model="searchQuery" 
+        type="text" 
+        class="cp-input" 
+        :placeholder="$t('ranking.searchPlaceholder') || 'Search Hardware...'"
+      />
+    </div>
+
     <div class="cp-section">
       <div class="cp-grid ranking-grid">
-        <div v-for="(item, index) in currentList" :key="index" class="cp-card ranking-card">
+        <div v-for="(item, index) in filteredList" :key="index" class="cp-card ranking-card">
           <div class="rank-num" :class="'rank-' + (index + 1)">#{{ index + 1 }}</div>
           <div class="rank-info">
-            <div class="rank-name">{{ item.name }}</div>
+            <div class="rank-name">
+              {{ item.name }}
+              <span v-if="activeTab === 'cpu' && item.hasIGPU !== undefined" 
+                    class="igpu-badge" 
+                    :class="{ 'has-igpu': item.hasIGPU, 'no-igpu': !item.hasIGPU }"
+                    :title="item.hasIGPU ? $t('ranking.hasIGPU') : $t('ranking.noIGPU')">
+                {{ item.hasIGPU ? 'iGPU' : 'No iGPU' }}
+              </span>
+            </div>
             <div class="rank-score">{{ item.score }} pts</div>
           </div>
           <div class="rank-bar-container">
@@ -41,37 +58,36 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { cpuRanking, gpuRanking } from '../config/rankingData';
+
+interface RankingItem {
+  name: string;
+  score: number;
+  hasIGPU?: boolean;
+}
 
 const activeTab = ref('cpu');
+const searchQuery = ref('');
 
-// Mock Data - In a real app, this would come from an API or JSON file
-const cpuList = [
-  { name: 'AMD Ryzen 9 9950X3D', score: 72000 },
-  { name: 'Intel Core Ultra 9 285K', score: 68000 },
-  { name: 'AMD Ryzen 9 9950X', score: 67000 },
-  { name: 'Intel Core i9-14900K', score: 62000 },
-  { name: 'AMD Ryzen 9 7950X3D', score: 60500 },
-  { name: 'Intel Core i9-13900K', score: 59000 },
-  { name: 'AMD Ryzen 7 9800X3D', score: 58500 },
-  { name: 'AMD Ryzen 9 7950X', score: 58000 },
-  { name: 'Intel Core i7-14700K', score: 54000 },
-  { name: 'AMD Ryzen 7 7800X3D', score: 48000 },
-];
+const currentList = computed<RankingItem[]>(() => {
+  return activeTab.value === 'cpu' ? cpuRanking : gpuRanking;
+});
 
-const gpuList = [
-  { name: 'NVIDIA GeForce RTX 5090', score: 58000 },
-  { name: 'NVIDIA GeForce RTX 5080', score: 45000 },
-  { name: 'NVIDIA GeForce RTX 4090', score: 38000 },
-  { name: 'NVIDIA GeForce RTX 4080 Super', score: 32000 },
-  { name: 'AMD Radeon RX 7900 XTX', score: 31000 },
-  { name: 'NVIDIA GeForce RTX 4080', score: 30500 },
-  { name: 'NVIDIA GeForce RTX 4070 Ti Super', score: 28000 },
-  { name: 'AMD Radeon RX 7900 XT', score: 27000 },
-];
+const filteredList = computed<RankingItem[]>(() => {
+  const query = searchQuery.value.toLowerCase();
+  let list = currentList.value;
+  
+  if (query) {
+    list = list.filter((item: RankingItem) => item.name.toLowerCase().includes(query));
+  }
+  
+  return list.sort((a: RankingItem, b: RankingItem) => b.score - a.score);
+});
 
-const currentList = computed(() => activeTab.value === 'cpu' ? cpuList : gpuList);
-const maxScore = computed(() => Math.max(...currentList.value.map(i => i.score)));
-
+const maxScore = computed(() => {
+  if (filteredList.value.length === 0) return 100;
+  return Math.max(...filteredList.value.map((i: RankingItem) => i.score));
+});
 </script>
 
 <style scoped>
@@ -131,6 +147,28 @@ const maxScore = computed(() => Math.max(...currentList.value.map(i => i.score))
   color: var(--cp-primary);
   border-bottom-color: var(--cp-primary);
   text-shadow: 0 0 10px var(--cp-primary);
+}
+
+.search-bar {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.cp-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--cp-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1em;
+}
+
+.cp-input:focus {
+  outline: none;
+  box-shadow: 0 0 10px var(--cp-primary);
 }
 
 .ranking-grid {
@@ -193,5 +231,26 @@ const maxScore = computed(() => Math.max(...currentList.value.map(i => i.score))
   height: 100%;
   background: var(--cp-primary);
   transition: width 1s ease-out;
+}
+
+.igpu-badge {
+  font-size: 0.7em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+  font-weight: normal;
+}
+
+.has-igpu {
+  background-color: rgba(0, 255, 0, 0.1);
+  border: 1px solid #0f0;
+  color: #0f0;
+}
+
+.no-igpu {
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid #f00;
+  color: #f00;
 }
 </style>

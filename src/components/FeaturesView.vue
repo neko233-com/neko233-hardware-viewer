@@ -91,7 +91,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const mode = ref<'none' | 'shutdown' | 'update' | 'bsod' | 'cyberpunk'>('none');
 const updateProgress = ref(0);
@@ -99,7 +99,7 @@ let progressInterval: any = null;
 
 function startFakeMode(m: 'shutdown' | 'update' | 'bsod' | 'cyberpunk') {
   mode.value = m;
-  appWindow.setFullscreen(true);
+  getCurrentWindow().setFullscreen(true);
   updateProgress.value = 0;
   
   if (progressInterval) clearInterval(progressInterval);
@@ -114,7 +114,7 @@ function startFakeMode(m: 'shutdown' | 'update' | 'bsod' | 'cyberpunk') {
 function exitFakeMode() {
   if (mode.value !== 'none') {
     mode.value = 'none';
-    appWindow.setFullscreen(false);
+    getCurrentWindow().setFullscreen(false);
     if (progressInterval) clearInterval(progressInterval);
   }
 }
@@ -125,8 +125,8 @@ function handleKeydown(e: KeyboardEvent) {
     if (mode.value !== 'none') {
       exitFakeMode();
     } else {
-      appWindow.isFullscreen().then(isFull => {
-        appWindow.setFullscreen(!isFull);
+      getCurrentWindow().isFullscreen().then(isFull => {
+        getCurrentWindow().setFullscreen(!isFull);
       });
     }
   } else if (e.key === 'Escape') {

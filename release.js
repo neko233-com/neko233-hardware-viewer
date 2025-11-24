@@ -12,13 +12,55 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-function runCommand(command) {
+function runCommand(command, ignoreError = false) {
     try {
+        console.log(`> ${command}`);
         execSync(command, { stdio: 'inherit' });
+        return true;
     } catch (error) {
-        console.error(`[Error] Command failed: ${command}`);
-        process.exit(1);
+        if (!ignoreError) {
+            console.error(`[Error] Command failed: ${command}`);
+            process.exit(1);
+        }
+        return false;
     }
+}
+
+function getPackageVersion() {
+    const pkgPath = path.join(__dirname, 'package.json');
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    return pkg.version;
+}
+
+function updateVersion(newVersion) {
+    // Update package.json
+    const pkgPath = path.join(__dirname, 'package.json');
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    pkg.version = newVersion;
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+    console.log(`[Info] Updated package.json to ${newVersion}`);
+
+    // Update tauri.conf.json
+    const tauriPath = path.join(__dirname, 'src-tauri', 'tauri.conf.json');
+    const tauri = JSON.parse(fs.readFileSync(tauriPath, 'utf-8'));
+    tauri.version = newVersion; // Tauri v2 root level version
+    fs.writeFileSync(tauriPath, JSON.stringify(tauri, null, 2) + '\n');
+    console.log(`[Info] Updated tauri.conf.json to ${newVersion}`);
+}
+
+function incrementVersion(version, type = 'patch') {
+    const parts = version.split('.').map(Number);
+    if (type === 'major') {
+        parts[0]++;
+        parts[1] = 0;
+        parts[2] = 0;
+    } else if (type === 'minor') {
+        parts[1]++;
+        parts[2] = 0;
+    } else {
+        parts[2]++;
+    }
+    return parts.join('.');
 }
 
 console.log('========================================');
@@ -26,19 +68,48 @@ console.log(' Neko233 Hardware Viewer - Release Tool');
 console.log('========================================');
 console.log('');
 
-rl.question("Enter commit message (default: 'Release update'): ", (answer) => {
-    const commitMsg = answer.trim() || 'Release update';
-    rl.close();
+// Main execution flow
+(async () => {
+    const ask = (query) => new Promise((resolve) => rl.question(query, resolve));
 
-    const startTime = Date.now();
+    // 1. Check Git Status
+    try {
+        execSync('git status --porcelain');
+    } catch (e) {
+        // If output is not empty (or command fails), we might have changes
+    }
+    
+    // We can't easily check output of execSync with stdio: inherit, so let's just try to add/commit if user wants
+    // Or just always add .
+    
+    console.log('[Step 1] Checking Git status...');
+    runCommand('git add .');
+    // Try commit, ignore error if nothing to commit
+    const commitMsg = await ask("Enter commit message for current changes (default: 'Release update'): ") || 'Release update';
+    runCommand(`git commit -m "${commitMsg}"`, true);
 
-    // 0. Load Signing Key
+    // 2. Version Management
+    const currentVersion = getPackageVersion();
+    console.log(`\nCurrent Version: ${currentVersion}`);
+    
+    const nextPatch = incrementVersion(currentVersion, 'patch');
+    const versionInput = await ask(`Enter new version (default: ${nextPatch}): `);
+    const newVersion = versionInput.trim() || nextPatch;
+
+    if (newVersion !== currentVersion) {
+        updateVersion(newVersion);
+        // Commit version bump
+        runCommand('git add package.json src-tauri/tauri.conf.json');
+        runCommand(`git commit -m "chore: bump version to ${newVersion}"`);
+    }
+
+    // 3. Load Signing Key
     const keyPath = path.join(__dirname, 'tauri.key');
     if (fs.existsSync(keyPath)) {
         try {
             const keyContent = fs.readFileSync(keyPath, 'utf-8').trim();
             process.env.TAURI_PRIVATE_KEY = keyContent;
-            process.env.TAURI_KEY_PASSWORD = ''; // Empty password as generated
+            process.env.TAURI_KEY_PASSWORD = ''; 
             console.log('[Info] Loaded signing key from tauri.key');
         } catch (e) {
             console.warn('[Warning] Failed to read tauri.key:', e.message);
@@ -47,14 +118,13 @@ rl.question("Enter commit message (default: 'Release update'): ", (answer) => {
         console.warn('[Warning] tauri.key not found. Build may fail if updater is enabled.');
     }
 
-    // 1. Build
-    console.log('\n[Step 1/4] Building Application...');
-    // Ensure dependencies are installed? Maybe skip to save time, assume dev env.
-    // runCommand('npm install'); 
+    // 4. Build
+    console.log('\n[Step 4] Building Application...');
+    const startTime = Date.now();
     runCommand('npm run build:win');
 
-    // 2. Copy Artifacts
-    console.log('\n[Step 2/4] Processing Artifacts...');
+    // 5. Copy Artifacts
+    console.log('\n[Step 5] Processing Artifacts...');
     const releaseDir = path.join(__dirname, 'release');
     if (!fs.existsSync(releaseDir)) {
         fs.mkdirSync(releaseDir);
@@ -90,17 +160,19 @@ rl.question("Enter commit message (default: 'Release update'): ", (answer) => {
         console.warn('[Warning] No artifacts found to copy.');
     }
 
-    // 3. Git Operations
-    console.log('\n[Step 3/4] Git Operations...');
+    // 6. Git Push & Tag
+    console.log('\n[Step 6] Git Push & Tag...');
     try {
-        runCommand('git add .');
-        runCommand(`git commit -m "${commitMsg}"`);
-        
-        console.log('\n[Step 4/4] Pushing to GitHub...');
         runCommand('git push');
+        
+        if (newVersion !== currentVersion) {
+            const tagName = `v${newVersion}`;
+            console.log(`Creating tag ${tagName}...`);
+            runCommand(`git tag ${tagName}`);
+            runCommand(`git push origin ${tagName}`);
+        }
     } catch (e) {
         console.error('[Error] Git operations failed.');
-        process.exit(1);
     }
 
     const endTime = Date.now();
@@ -109,6 +181,9 @@ rl.question("Enter commit message (default: 'Release update'): ", (answer) => {
     console.log('\n========================================');
     console.log(`[Success] Release completed in ${duration}s!`);
     console.log('Artifacts are in the "release/" folder.');
-    console.log('Code pushed to GitHub.');
+    console.log('Code and Tags pushed to GitHub.');
     console.log('========================================');
-});
+    
+    rl.close();
+})();
+

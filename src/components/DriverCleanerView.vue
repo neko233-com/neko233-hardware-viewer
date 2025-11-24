@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();

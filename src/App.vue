@@ -61,9 +61,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { appWindow } from '@tauri-apps/api/window';
-import { invoke } from '@tauri-apps/api/tauri';
-import { checkUpdate, installUpdate } from '@tauri-apps/api/updater';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
 import Sidebar from "./components/Sidebar.vue";
 import HardwareView from "./components/HardwareView.vue";
@@ -78,6 +79,8 @@ import Win11InstallView from "./components/Win11InstallView.vue";
 import Win11TweaksView from "./components/Win11TweaksView.vue";
 import ColorManagementView from "./components/ColorManagementView.vue";
 import FeaturesView from "./components/FeaturesView.vue";
+import UninstallView from "./components/UninstallView.vue";
+import NetworkView from "./components/NetworkView.vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
 
 const { t } = useI18n();
@@ -93,17 +96,17 @@ const toastMessage = ref('');
 const updateAvailable = ref(false);
 
 const exitApp = async () => {
-  await appWindow.close();
+  await getCurrentWindow().close();
 };
 
 const minimizeApp = async () => {
-  await appWindow.minimize();
+  await getCurrentWindow().minimize();
 };
 
 const toggleFullscreen = async () => {
   try {
-    const isFullscreen = await appWindow.isFullscreen();
-    await appWindow.setFullscreen(!isFullscreen);
+    const isFullscreen = await getCurrentWindow().isFullscreen();
+    await getCurrentWindow().setFullscreen(!isFullscreen);
   } catch (e) {
     console.error('Failed to toggle fullscreen:', e);
   }
@@ -121,8 +124,11 @@ const toggleFullscreen = async () => {
 
 const startUpdate = async () => {
   try {
-    await installUpdate();
-    await appWindow.close(); 
+    const update = await check();
+    if (update) {
+      await update.downloadAndInstall();
+      await relaunch();
+    }
   } catch (e) {
     alert('Update failed: ' + e);
   }
@@ -132,8 +138,8 @@ const autoCheckLoop = async () => {
   if (!autoUpdateEnabled.value) return;
   
   try {
-    const { shouldUpdate, manifest } = await checkUpdate();
-    if (shouldUpdate) {
+    const update = await check();
+    if (update) {
       // Check game mode
       const isGame: boolean = await invoke('is_game_running');
       if (isGame) {
@@ -141,7 +147,7 @@ const autoCheckLoop = async () => {
         return;
       }
       
-      toastMessage.value = `${t('settings.updateAvailable')} v${manifest?.version}`;
+      toastMessage.value = `${t('settings.updateAvailable')} v${update.version}`;
       updateAvailable.value = true;
       showToast.value = true;
     }
@@ -195,6 +201,8 @@ const baseMenuItems = computed(() => [
   { id: 'win11_tweaks', label: t('menu.win11_tweaks'), icon: '⚙️' },
   { id: 'color_management', label: t('menu.color_management'), icon: '🎨' },
   { id: 'features', label: t('menu.features'), icon: '🎭' },
+  { id: 'network', label: t('menu.network'), icon: '🌐' },
+  { id: 'uninstall', label: t('menu.uninstall'), icon: '🗑️' },
 ]);
 
 const sortedMenuItems = computed(() => {
@@ -232,6 +240,8 @@ const activeComponent = computed(() => {
     case 'win11_tweaks': return Win11TweaksView;
     case 'color_management': return ColorManagementView;
     case 'features': return FeaturesView;
+    case 'uninstall': return UninstallView;
+    case 'network': return NetworkView;
     default: return HardwareView;
   }
 });

@@ -71,6 +71,9 @@
             <div class="cp-value">{{ mobo.Version }}</div>
             
             <!-- Slots Info -->
+            <div class="cp-label">{{ $t('labels.ramSlots') || 'RAM Slots' }}</div>
+            <div class="cp-value">{{ mobo.RamSlots?.used || 0 }} / {{ mobo.RamSlots?.total || 0 }} ({{ $t('labels.usedTotal') }})</div>
+
             <div class="cp-label">{{ $t('labels.ssdSlots') }}</div>
             <div class="cp-value">{{ mobo.SsdSlots.used }} / {{ mobo.SsdSlots.total }} ({{ $t('labels.usedTotal') }})</div>
             <div class="slot-details" v-if="mobo.SsdSlots.details.length > 0">
@@ -103,11 +106,19 @@
             <div class="cp-label">{{ $t('labels.model') }}</div>
             <div class="cp-value">{{ cpu.info.Name }}</div>
             <div class="cp-label">{{ $t('labels.manufacturer') }}</div>
-            <div class="cp-value">{{ cpu.info.Manufacturer }}</div>
+            <div class="cp-value">{{ getManufacturer(cpu.info.Manufacturer, cpu.info.Name) }}</div>
             <div class="cp-label">{{ $t('labels.coresThreads') }}</div>
             <div class="cp-value">{{ cpu.info.NumberOfCores }} / {{ cpu.info.NumberOfLogicalProcessors }}</div>
             <div class="cp-label">{{ $t('labels.clockSpeed') }}</div>
             <div class="cp-value">{{ cpu.info.MaxClockSpeed }} MHz</div>
+            <div class="cp-label">{{ $t('labels.l2Cache') }}</div>
+            <div class="cp-value">{{ cpu.info.L2CacheSize ? (cpu.info.L2CacheSize / 1024).toFixed(1) + ' MB' : 'N/A' }}</div>
+            <div class="cp-label">{{ $t('labels.l3Cache') }}</div>
+            <div class="cp-value">{{ cpu.info.L3CacheSize ? (cpu.info.L3CacheSize / 1024).toFixed(1) + ' MB' : 'N/A' }}</div>
+            <div class="cp-label">{{ $t('labels.socket') }}</div>
+            <div class="cp-value">{{ cpu.info.SocketDesignation || 'N/A' }}</div>
+            <div class="cp-label">{{ $t('labels.virtualization') }}</div>
+            <div class="cp-value">{{ cpu.info.VirtualizationFirmwareEnabled ? 'Enabled' : 'Disabled/Unknown' }}</div>
             <div class="cp-score" :class="getScoreClass(cpu.score)">
               {{ $t('score') }}: {{ cpu.score_num }} ({{ $t('scores.' + cleanScore(cpu.score)) }})
             </div>
@@ -131,12 +142,19 @@
             <div class="cp-label">{{ $t('labels.model') }}</div>
             <div class="cp-value">{{ gpu.info.Name }}</div>
             <div class="cp-label">{{ $t('labels.manufacturer') }}</div>
-            <div class="cp-value">{{ gpu.info.AdapterCompatibility || $t('labels.unknown') }}</div>
+            <div class="cp-value">{{ getManufacturer(gpu.info.AdapterCompatibility, gpu.info.Name) }}</div>
             <div class="cp-label">{{ $t('labels.driverVersion') }}</div>
             <div class="cp-value">{{ gpu.info.DriverVersion }}</div>
+            <div class="cp-label">{{ $t('labels.driverDate') }}</div>
+            <div class="cp-value">{{ gpu.info.DriverDate ? formatDate(gpu.info.DriverDate) : 'N/A' }}</div>
             <div class="cp-label">{{ $t('labels.vram') }}</div>
             <div class="cp-value">
               {{ gpu.info.AdapterRAM ? (gpu.info.AdapterRAM / 1024 / 1024 / 1024).toFixed(2) + ' GB' : $t('labels.unknown') }}
+            </div>
+            <div class="cp-label">{{ $t('labels.resolution') }}</div>
+            <div class="cp-value">
+              {{ gpu.info.CurrentHorizontalResolution && gpu.info.CurrentVerticalResolution ? 
+                 `${gpu.info.CurrentHorizontalResolution}x${gpu.info.CurrentVerticalResolution} @ ${gpu.info.CurrentRefreshRate}Hz` : 'N/A' }}
             </div>
             <div class="cp-score" :class="getScoreClass(gpu.score)">
               {{ $t('score') }}: {{ gpu.score_num }} ({{ $t('scores.' + cleanScore(gpu.score)) }})
@@ -203,45 +221,122 @@
           <div v-for="(disk, index) in info.disks" :key="index" class="cp-card">
             <div class="cp-label">{{ $t('labels.model') }}</div>
             <div class="cp-value">{{ disk.info.Model }}</div>
-            <div class="cp-label">{{ $t('labels.manufacturer') }}</div>
-            <div class="cp-value">{{ disk.info.Manufacturer || 'Unknown' }}</div>
+            
+            <div class="cp-label">{{ $t('labels.type') }}</div>
+            <div class="cp-value">
+              {{ disk.info.MediaType || 'Unknown' }} ({{ disk.info.BusType || 'Unknown' }})
+              <span v-if="disk.info.PcieProfile" style="color: var(--cp-primary); font-weight: bold; margin-left: 5px;">
+                [{{ disk.info.PcieProfile }}]
+              </span>
+            </div>
+            
             <div class="cp-label">{{ $t('labels.serialNumber') }}</div>
             <div class="cp-value-row">
               <span class="cp-value text-truncate" :title="disk.info.SerialNumber">{{ disk.info.SerialNumber || 'Unknown' }}</span>
               <button v-if="disk.info.SerialNumber" class="copy-btn" @click="copyToClipboard(disk.info.SerialNumber)" title="Copy">📋</button>
             </div>
+            
             <div class="cp-label">{{ $t('labels.capacity') }}</div>
             <div class="cp-value">
               {{ disk.info.Size ? (disk.info.Size / 1024 / 1024 / 1024).toFixed(2) + ' GB' : 'Unknown' }}
             </div>
-            <div class="cp-label">{{ $t('labels.interface') }}</div>
-            <div class="cp-value">{{ disk.info.InterfaceType || 'Unknown' }}</div>
+            
+            <div class="cp-label">{{ $t('labels.health') }}</div>
+            <div class="cp-value" :style="{ color: disk.info.HealthStatus === 'Healthy' ? '#0f0' : '#f00' }">
+                {{ disk.info.HealthStatus || 'Unknown' }}
+            </div>
+
+            <div class="cp-label">{{ $t('labels.firmware') }}</div>
+            <div class="cp-value">{{ disk.info.FirmwareRevision || 'N/A' }}</div>
+            
             <div class="cp-score" :class="getScoreClass(disk.score)">
               {{ $t('score') }}: {{ disk.score_num }} ({{ $t('scores.' + cleanScore(disk.score)) }})
             </div>
 
-            <a v-if="getDriverLink(disk.info.Manufacturer || disk.info.Model, disk.info.Model)" :href="getDriverLink(disk.info.Manufacturer || disk.info.Model, disk.info.Model) || undefined" target="_blank" class="driver-link">
+            <a v-if="getDriverLink(disk.info.Model, disk.info.Model)" :href="getDriverLink(disk.info.Model, disk.info.Model) || undefined" target="_blank" class="driver-link">
               {{ $t('labels.downloadDriver') }}
             </a>
           </div>
         </div>
       </div>
 
-      <!-- Sound -->
-      <div class="cp-section">
-        <div class="cp-section-title">{{ $t('sections.sound') }}</div>
+      <!-- Monitor -->
+      <div class="cp-section" v-if="info.monitor && info.monitor.length > 0">
+        <div class="cp-section-title">{{ $t('sections.monitor') }}</div>
         <div class="cp-grid">
-          <div v-for="(snd, index) in info.sound" :key="index" class="cp-card">
+          <div v-for="(mon, index) in info.monitor" :key="index" class="cp-card">
             <div class="cp-label">{{ $t('labels.model') }}</div>
-            <div class="cp-value">{{ snd.Name }}</div>
+            <div class="cp-value">{{ mon.Name }}</div>
             <div class="cp-label">{{ $t('labels.manufacturer') }}</div>
-            <div class="cp-value">{{ snd.Manufacturer }}</div>
-            <div class="cp-label">{{ $t('labels.status') }}</div>
-            <div class="cp-value">{{ snd.Status || 'Unknown' }}</div>
+            <div class="cp-value">{{ mon.Manufacturer || 'Unknown' }}</div>
+            <div class="cp-label">{{ $t('labels.resolution') }}</div>
+            <div class="cp-value">{{ mon.ScreenWidth && mon.ScreenHeight ? `${mon.ScreenWidth}x${mon.ScreenHeight}` : 'N/A' }}</div>
           </div>
         </div>
       </div>
 
+      <!-- Network -->
+      <div class="cp-section" v-if="info.network && info.network.length > 0">
+        <div class="cp-section-title">{{ $t('sections.network') }}</div>
+        <div class="cp-grid">
+          <div v-for="(net, index) in info.network" :key="index" class="cp-card">
+            <div class="cp-label">{{ $t('labels.model') }}</div>
+            <div class="cp-value">{{ net.Name }}</div>
+            <div class="cp-label">{{ $t('labels.manufacturer') }}</div>
+            <div class="cp-value">{{ net.Manufacturer || 'Unknown' }}</div>
+            <div class="cp-label">{{ $t('labels.macAddress') }}</div>
+            <div class="cp-value">{{ net.MACAddress || 'N/A' }}</div>
+            <div class="cp-label">{{ $t('labels.status') }}</div>
+            <div class="cp-value" :style="{ color: net.NetConnectionStatus === 2 ? '#0f0' : '#aaa' }">
+              {{ net.NetConnectionStatus === 2 ? 'Connected' : 'Disconnected' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Peripherals -->
+      <div class="cp-section">
+        <div class="cp-section-title">{{ $t('sections.peripherals') }}</div>
+        <div class="cp-grid">
+          <!-- Audio -->
+          <div class="cp-card">
+            <div class="cp-label" style="margin-bottom: 10px; color: var(--cp-primary);">{{ $t('sections.sound') }}</div>
+            <div v-for="(snd, index) in info.sound" :key="'snd'+index" style="margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+              <div style="font-weight: bold;">{{ snd.Name }}</div>
+              <div style="font-size: 0.8em; color: #aaa;">{{ snd.Manufacturer || 'Unknown' }}</div>
+            </div>
+          </div>
+          
+          <!-- Camera -->
+          <div class="cp-card" v-if="info.camera && info.camera.length > 0">
+            <div class="cp-label" style="margin-bottom: 10px; color: var(--cp-primary);">{{ $t('sections.camera') }}</div>
+            <div v-for="(cam, index) in info.camera" :key="'cam'+index" style="margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+              <div style="font-weight: bold;">{{ cam.Name }}</div>
+              <div style="font-size: 0.8em; color: #aaa;">{{ cam.Manufacturer || 'Unknown' }}</div>
+            </div>
+          </div>
+
+          <!-- Bluetooth -->
+          <div class="cp-card" v-if="info.bluetooth && info.bluetooth.length > 0">
+            <div class="cp-label" style="margin-bottom: 10px; color: var(--cp-primary);">{{ $t('sections.bluetooth') }}</div>
+            <div v-for="(bt, index) in info.bluetooth" :key="'bt'+index" style="margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+              <div style="font-weight: bold;">{{ bt.Name }}</div>
+              <div style="font-size: 0.8em; color: #aaa;">{{ bt.Manufacturer || 'Unknown' }}</div>
+            </div>
+          </div>
+
+          <!-- USB -->
+          <div class="cp-card" v-if="info.usb && info.usb.length > 0">
+            <div class="cp-label" style="margin-bottom: 10px; color: var(--cp-primary);">{{ $t('sections.usb') }}</div>
+            <div style="max-height: 200px; overflow-y: auto;">
+              <div v-for="(usb, index) in info.usb" :key="'usb'+index" style="margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                <div style="font-weight: bold; font-size: 0.9em;">{{ usb.Name }}</div>
+                <div style="font-size: 0.8em; color: #aaa;">{{ usb.Manufacturer || 'Unknown' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- CPU Info Modal -->
@@ -326,12 +421,24 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { getDriverLink } from '../config/drivers';
 
 const loading = ref(true);
 const error = ref('');
-const info = ref<any>(null);
+const info = ref<any>({
+  motherboard: [],
+  cpu: [],
+  gpu: [],
+  ram: { info: [], total_gb: 0, avg_speed: 0, score: "Unknown", score_num: 0 },
+  disks: [],
+  sound: [],
+  monitor: [],
+  network: [],
+  usb: [],
+  camera: [],
+  bluetooth: []
+});
 const usage = ref({ cpu_usage: 0, memory_used: 0, memory_total: 1 });
 const showCpuInfo = ref(false);
 const showGpuInfo = ref(false);
@@ -368,14 +475,13 @@ const cleanScore = (score: string) => {
   return score.replace(/"/g, '');
 };
 
-async function copyToClipboard(text: string) {
+const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text);
-    // Could add a toast notification here
   } catch (err) {
     console.error('Failed to copy: ', err);
   }
-}
+};
 
 async function runMemoryDiagnostic() {
   if (!confirm('This will launch the Windows Memory Diagnostic tool. Continue?')) return;
@@ -395,25 +501,71 @@ const fetchUsage = async () => {
   }
 };
 
-onMounted(async () => {
-  try {
-    // Invoke the Rust command
-    const res = await invoke('get_hardware_info');
-    console.log(res);
-    info.value = res;
-    bootTime.value = await invoke('get_boot_time');
-    uptime.value = await invoke('get_uptime');
-    
-    // Start usage polling
-    fetchUsage();
-    usageInterval = setInterval(fetchUsage, 2000);
-  } catch (e) {
-    console.error(e);
-    error.value = String(e);
-  } finally {
-    loading.value = false;
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return 'N/A';
+  // WMI date format: YYYYMMDDHHMMSS.uuuuuu+ooo
+  // Example: 20230912000000.000000-000
+  if (dateStr.length >= 8) {
+    const year = dateStr.substring(0, 4);
+    const month = dateStr.substring(4, 6);
+    const day = dateStr.substring(6, 8);
+    return `${year}-${month}-${day}`;
   }
+  return dateStr;
+};
+
+const getManufacturer = (man: string | undefined | null, name: string | undefined | null) => {
+  if (man && man !== 'Unknown' && man !== '0000') return man;
+  const n = (name || '').toLowerCase();
+  if (n.includes('nvidia')) return 'NVIDIA';
+  if (n.includes('amd') || n.includes('radeon')) return 'AMD';
+  if (n.includes('intel')) return 'Intel';
+  return 'Unknown';
+};
+
+onMounted(async () => {
+  // Show UI immediately with empty data
+  loading.value = false;
+  
+  // Start usage polling
+  fetchUsage();
+  usageInterval = setInterval(fetchUsage, 2000);
+  
+  // Load boot time and uptime
+  invoke('get_boot_time').then((res: any) => bootTime.value = res);
+  invoke('get_uptime').then((res: any) => uptime.value = res);
+
+  // Load hardware info asynchronously
+  loadHardwareInfo();
 });
+
+async function loadHardwareInfo() {
+  const load = async (cmd: string, key: string) => {
+    try {
+      const res = await invoke(cmd);
+      info.value[key] = res;
+    } catch (e) {
+      console.error(`Failed to load ${key}:`, e);
+    }
+  };
+
+  // Fire and forget - parallel loading
+  load('get_motherboard_info_command', 'motherboard');
+  load('get_cpu_info_command', 'cpu');
+  load('get_gpu_info_command', 'gpu');
+  load('get_ram_info_command', 'ram');
+  load('get_disk_info_command', 'disks');
+  load('get_sound_info_command', 'sound');
+  load('get_monitor_info_command', 'monitor');
+  load('get_network_info_command', 'network');
+  
+  // Peripherals returns a struct with usb, camera, bluetooth
+  invoke('get_peripherals_info_command').then((res: any) => {
+    info.value.usb = res.usb;
+    info.value.camera = res.camera;
+    info.value.bluetooth = res.bluetooth;
+  }).catch((e: any) => console.error("Failed to load peripherals:", e));
+}
 
 onUnmounted(() => {
   if (usageInterval) clearInterval(usageInterval);

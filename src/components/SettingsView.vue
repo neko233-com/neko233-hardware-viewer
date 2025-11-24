@@ -56,8 +56,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { invoke } from '@tauri-apps/api/tauri';
-import { checkUpdate, installUpdate } from '@tauri-apps/api/updater';
+import { invoke } from '@tauri-apps/api/core';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
 import { useI18n } from 'vue-i18n';
 
@@ -84,12 +85,12 @@ const saveAutoUpdate = () => {
 const manualCheckUpdate = async () => {
   checkingUpdate.value = true;
   try {
-    const { shouldUpdate, manifest } = await checkUpdate();
-    if (shouldUpdate) {
-      const yes = confirm(`${t('settings.updateAvailable')} v${manifest?.version}\n${t('settings.updateNow')}?`);
+    const update = await check();
+    if (update) {
+      const yes = confirm(`${t('settings.updateAvailable')} v${update.version}\n${t('settings.updateNow')}?`);
       if (yes) {
-        await installUpdate();
-        await invoke('restart_app'); // Assuming we might need a restart command or just close
+        await update.downloadAndInstall();
+        await relaunch();
       }
     } else {
       alert(t('settings.noUpdate'));

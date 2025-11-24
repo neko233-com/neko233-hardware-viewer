@@ -5,85 +5,36 @@
       <div class="cp-subtitle">{{ $t('optimization.subtitle') }}</div>
     </div>
 
-    <div class="cp-section">
-      <div class="cp-section-title">{{ $t('optimization.sectionTitle') }}</div>
-      <div class="cp-grid">
-        
-        <!-- Firewall -->
-        <div class="cp-card">
-          <div class="cp-label">{{ $t('optimization.firewall') }}</div>
-          <div class="cp-value">{{ firewallStatus ? $t('optimization.enabled') : $t('optimization.disabled') }}</div>
-          <div class="actions">
-            <button class="cp-btn" @click="toggleFirewall(!firewallStatus)" :disabled="loading">
-              {{ firewallStatus ? $t('optimization.disable') : $t('optimization.enable') }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Cortana -->
-        <div class="cp-card">
-          <div class="cp-label">{{ $t('optimization.cortana') }}</div>
-          <div class="cp-value">{{ cortanaStatus ? $t('optimization.enabled') : $t('optimization.disabled') }}</div>
-          <div class="actions">
-            <button class="cp-btn" @click="toggleCortana(!cortanaStatus)" :disabled="loading">
-              {{ cortanaStatus ? $t('optimization.disable') : $t('optimization.enable') }}
-            </button>
-          </div>
-        </div>
-
-      </div>
+    <!-- Search Filter -->
+    <div class="cp-section" style="margin-bottom: 20px;">
+      <input 
+        type="text" 
+        v-model="searchQuery" 
+        :placeholder="$t('optimization.searchPlaceholder')" 
+        class="cp-input"
+        style="width: 100%; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--cp-primary); color: var(--cp-text); font-family: 'Rajdhani', sans-serif;"
+      />
     </div>
 
-    <!-- System Performance Section -->
-    <div class="cp-section">
-      <div class="cp-section-title">{{ $t('optimization.performanceTitle') }}</div>
+    <div class="cp-section" v-if="filteredTweaks.length > 0">
+      <div class="cp-section-title">{{ $t('optimization.tweaksTitle') }}</div>
       <div class="cp-grid">
-        
-        <!-- Processor Optimization -->
-        <div class="cp-card">
-          <div class="cp-label">{{ $t('optimization.processor') }}</div>
-          <div class="cp-value">{{ $t('optimization.processorDesc') }}</div>
+        <div class="cp-card" v-for="tweak in filteredTweaks" :key="tweak.id">
+          <div class="cp-label">{{ $t('optimization.' + tweak.id) }}</div>
+          <div class="cp-desc" style="font-size: 0.8em; color: #aaa; margin-bottom: 10px;">{{ $t('optimization.' + tweak.id + '_desc') }}</div>
           <div class="actions">
-            <button class="cp-btn" @click="runOptimization('optimize_processor')" :disabled="loading">
-              {{ $t('optimization.apply') }}
-            </button>
-          </div>
-        </div>
-
-        <!-- High Performance Power Plan -->
-        <div class="cp-card">
-          <div class="cp-label">{{ $t('optimization.powerPlan') }}</div>
-          <div class="cp-value">{{ $t('optimization.powerPlanDesc') }}</div>
-          <div class="actions">
-            <button class="cp-btn" @click="runOptimization('enable_high_perf_plan')" :disabled="loading">
+            <button class="cp-btn" @click="applyTweak(tweak.id, true)" :disabled="loading">
               {{ $t('optimization.enable') }}
             </button>
-          </div>
-        </div>
-
-        <!-- File System Cache -->
-        <div class="cp-card">
-          <div class="cp-label">{{ $t('optimization.fsCache') }}</div>
-          <div class="cp-value">{{ $t('optimization.fsCacheDesc') }}</div>
-          <div class="actions">
-            <button class="cp-btn" @click="runOptimization('increase_fs_cache')" :disabled="loading">
-              {{ $t('optimization.apply') }}
+            <button class="cp-btn" style="margin-left: 5px; background: rgba(255,0,0,0.2); border-color: #f00;" @click="applyTweak(tweak.id, false)" :disabled="loading">
+              {{ $t('optimization.disable') }}
             </button>
           </div>
         </div>
-
-        <!-- Large System Cache -->
-        <div class="cp-card">
-          <div class="cp-label">{{ $t('optimization.sysCache') }}</div>
-          <div class="cp-value">{{ $t('optimization.sysCacheDesc') }}</div>
-          <div class="actions">
-            <button class="cp-btn" @click="runOptimization('enable_large_system_cache')" :disabled="loading">
-              {{ $t('optimization.enable') }}
-            </button>
-          </div>
-        </div>
-
       </div>
+    </div>
+    <div v-else class="cp-section">
+        <div style="text-align: center; color: #aaa;">{{ $t('optimization.noResults') }}</div>
     </div>
 
     <div v-if="message" class="cp-message">{{ message }}</div>
@@ -91,63 +42,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { invoke } from '@tauri-apps/api/tauri';
+import { ref, computed } from 'vue';
+import { invoke } from '@tauri-apps/api/core';
 
-const firewallStatus = ref(false);
-const cortanaStatus = ref(false);
 const loading = ref(false);
 const message = ref('');
+const searchQuery = ref('');
 
-const fetchStatus = async () => {
-  try {
-    firewallStatus.value = await invoke('get_firewall_status');
-    cortanaStatus.value = await invoke('get_cortana_status');
-  } catch (e) {
-    console.error(e);
-  }
-};
+interface Tweak {
+  id: string;
+  category: 'privacy' | 'performance' | 'ui' | 'network';
+}
 
-const runOptimization = async (command: string) => {
+const tweaks: Tweak[] = [
+  { id: 'telemetry', category: 'privacy' },
+  { id: 'windows_update', category: 'performance' },
+  { id: 'hibernation', category: 'performance' },
+  { id: 'game_dvr', category: 'performance' },
+  { id: 'sticky_keys', category: 'ui' },
+  { id: 'mouse_acceleration', category: 'ui' },
+  { id: 'lock_screen', category: 'ui' },
+  { id: 'bing_search', category: 'privacy' },
+  { id: 'aero_shake', category: 'ui' },
+  { id: 'timeline', category: 'privacy' },
+  { id: 'cortana', category: 'privacy' },
+  { id: 'location_tracking', category: 'privacy' },
+  { id: 'advertising_id', category: 'privacy' },
+  { id: 'feedback_diagnostics', category: 'privacy' },
+  { id: 'suggested_apps', category: 'ui' },
+  { id: 'meet_now', category: 'ui' },
+  { id: 'news_interests', category: 'ui' },
+  { id: 'wifi_sense', category: 'privacy' },
+  { id: 'delivery_optimization', category: 'network' },
+  { id: 'this_pc_desktop', category: 'ui' },
+  { id: 'control_panel_desktop', category: 'ui' },
+  { id: 'dark_mode', category: 'ui' },
+  { id: 'transparency', category: 'ui' },
+  { id: 'high_perf_plan', category: 'performance' },
+  { id: 'fast_startup', category: 'performance' },
+  { id: 'uac_dimming', category: 'ui' },
+  { id: 'printer_spooler', category: 'performance' },
+  { id: 'fax_service', category: 'performance' },
+  { id: 'xps_services', category: 'performance' },
+  { id: 'error_reporting', category: 'privacy' },
+];
+
+const filteredTweaks = computed(() => {
+  if (!searchQuery.value) return tweaks;
+  const q = searchQuery.value.toLowerCase();
+  return tweaks.filter(t => t.id.toLowerCase().includes(q));
+});
+
+async function applyTweak(id: string, enable: boolean) {
   loading.value = true;
   message.value = '';
   try {
-    const res: string = await invoke(command);
-    message.value = res;
+    const result: string = await invoke('apply_optimization', { id, enable });
+    message.value = result;
   } catch (e) {
     message.value = 'Error: ' + e;
   } finally {
     loading.value = false;
   }
-};
-
-const toggleFirewall = async (enable: boolean) => {
-  loading.value = true;
-  try {
-    const res: string = await invoke('set_firewall_status', { enable });
-    message.value = res;
-    await fetchStatus();
-  } catch (e) {
-    message.value = 'Error: ' + e;
-  } finally {
-    loading.value = false;
-  }
-};
-
-const toggleCortana = async (enable: boolean) => {
-  loading.value = true;
-  try {
-    const res: string = await invoke('set_cortana_status', { enable });
-    message.value = res;
-    await fetchStatus();
-  } catch (e) {
-    message.value = 'Error: ' + e;
-  } finally {
-    loading.value = false;
-  }
-};
-
-onMounted(fetchStatus);
+}
 </script>
 
 <style scoped>

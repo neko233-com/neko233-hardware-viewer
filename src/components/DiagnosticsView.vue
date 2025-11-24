@@ -5,10 +5,10 @@
       <div class="cp-subtitle">{{ $t('diagnostics.subtitle') }}</div>
     </div>
 
+    <!-- Memory Check Section -->
     <div class="cp-section">
       <div class="cp-section-title">{{ $t('diagnostics.sectionTitle') }}</div>
       <div class="cp-grid">
-        
         <!-- Quick Check -->
         <div class="cp-card">
           <div class="cp-label">{{ $t('diagnostics.quickCheck') }}</div>
@@ -20,7 +20,6 @@
             </button>
           </div>
         </div>
-
         <!-- Full Check -->
         <div class="cp-card">
           <div class="cp-label">{{ $t('diagnostics.fullCheck') }}</div>
@@ -32,7 +31,70 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
 
+    <!-- System Health Section -->
+    <div class="cp-section">
+      <div class="cp-section-title">System Health</div>
+      <div class="cp-grid">
+        <div class="cp-card" v-for="item in healthItems" :key="item.key">
+          <div class="cp-label">{{ $t(`diagnostics.${item.key}`) }}</div>
+          <div class="cp-desc" v-if="results[item.key]"><pre>{{ results[item.key] }}</pre></div>
+          <div class="actions">
+            <button class="cp-btn" @click="runDiagnostic(item.cmd, item.key)" :disabled="running[item.key]">
+              {{ running[item.key] ? $t('diagnostics.running') : $t('diagnostics.run') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Network Section -->
+    <div class="cp-section">
+      <div class="cp-section-title">Network</div>
+      <div class="cp-grid">
+        <div class="cp-card" v-for="item in networkItems" :key="item.key">
+          <div class="cp-label">{{ $t(`diagnostics.${item.key}`) }}</div>
+          <div class="cp-desc" v-if="results[item.key]"><pre>{{ results[item.key] }}</pre></div>
+          <div class="actions">
+            <button class="cp-btn" @click="runDiagnostic(item.cmd, item.key)" :disabled="running[item.key]">
+              {{ running[item.key] ? $t('diagnostics.running') : $t('diagnostics.run') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Section -->
+    <div class="cp-section">
+      <div class="cp-section-title">Security</div>
+      <div class="cp-grid">
+        <div class="cp-card" v-for="item in securityItems" :key="item.key">
+          <div class="cp-label">{{ $t(`diagnostics.${item.key}`) }}</div>
+          <div class="cp-desc" v-if="results[item.key]"><pre>{{ results[item.key] }}</pre></div>
+          <div class="actions">
+            <button class="cp-btn" @click="runDiagnostic(item.cmd, item.key)" :disabled="running[item.key]">
+              {{ running[item.key] ? $t('diagnostics.running') : $t('diagnostics.run') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Other Section -->
+    <div class="cp-section">
+      <div class="cp-section-title">Power & Activation</div>
+      <div class="cp-grid">
+        <div class="cp-card" v-for="item in otherItems" :key="item.key">
+          <div class="cp-label">{{ $t(`diagnostics.${item.key}`) }}</div>
+          <div class="cp-desc" v-if="results[item.key]"><pre>{{ results[item.key] }}</pre></div>
+          <div class="actions">
+            <button class="cp-btn" @click="runDiagnostic(item.cmd, item.key)" :disabled="running[item.key]">
+              {{ running[item.key] ? $t('diagnostics.running') : $t('diagnostics.run') }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -42,7 +104,7 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useI18n } from 'vue-i18n';
 import { useTasks } from '../composables/useTasks';
@@ -53,6 +115,48 @@ const loading = ref(false);
 const message = ref('');
 const isError = ref(false);
 let unlisten: any = null;
+
+const results = ref<Record<string, string>>({});
+const running = ref<Record<string, boolean>>({});
+
+const healthItems = [
+  { key: 'diskHealth', cmd: 'check_disk_health' },
+  { key: 'sfc', cmd: 'check_system_file_integrity' },
+  { key: 'dism', cmd: 'check_dism_health' },
+];
+
+const networkItems = [
+  { key: 'network', cmd: 'check_network_latency' },
+  { key: 'dns', cmd: 'check_dns_resolution' },
+];
+
+const securityItems = [
+  { key: 'tpm', cmd: 'check_tpm_status' },
+  { key: 'secureBoot', cmd: 'check_secure_boot_status' },
+  { key: 'antivirus', cmd: 'check_antivirus_status' },
+];
+
+const otherItems = [
+  { key: 'battery', cmd: 'check_battery_health' },
+  { key: 'activation', cmd: 'check_activation_status_detailed' },
+];
+
+const runDiagnostic = async (cmd: string, key: string) => {
+  running.value[key] = true;
+  results.value[key] = '';
+  addTask(key, t(`diagnostics.${key}`));
+  
+  try {
+    const res = await invoke(cmd) as string;
+    results.value[key] = res;
+    updateTask(key, 100, 'completed');
+  } catch (e) {
+    results.value[key] = 'Error: ' + e;
+    updateTask(key, 0, 'failed', String(e));
+  } finally {
+    running.value[key] = false;
+  }
+};
 
 const runQuickCheck = async () => {
   loading.value = true;
@@ -97,6 +201,20 @@ const runFullCheck = async () => {
   }
 };
 </script>
+
+<style scoped>
+.cp-desc pre {
+  white-space: pre-wrap;
+  font-family: 'Consolas', monospace;
+  font-size: 0.8rem;
+  color: #00ff9d;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+</style>
 
 <style scoped>
 .cp-container {
