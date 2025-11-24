@@ -524,9 +524,6 @@ const getManufacturer = (man: string | undefined | null, name: string | undefine
 };
 
 onMounted(async () => {
-  // Show UI immediately with empty data
-  loading.value = false;
-  
   // Start usage polling
   fetchUsage();
   usageInterval = setInterval(fetchUsage, 2000);
@@ -537,6 +534,11 @@ onMounted(async () => {
 
   // Load hardware info asynchronously
   loadHardwareInfo();
+
+  // Simulate initialization delay for visual effect (Cyberpunk style)
+  setTimeout(() => {
+    loading.value = false;
+  }, 1500);
 });
 
 async function loadHardwareInfo() {
