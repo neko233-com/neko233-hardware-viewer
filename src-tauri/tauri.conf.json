@@ -1,6 +1,6 @@
 {
   "productName": "neko233-hardware-viewer",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "identifier": "com.neko233.hardwareviewer",
   "build": {
     "beforeDevCommand": "npm run dev",
