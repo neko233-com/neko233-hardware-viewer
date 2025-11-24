@@ -1,4 +1,4 @@
-<template>
+ <template>
   <div class="cp-container">
     <div class="cp-header">
       <h1 class="cp-title glitch" :data-text="$t('settings.title')">{{ $t('settings.title') }}</h1>

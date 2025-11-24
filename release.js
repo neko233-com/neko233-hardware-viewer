@@ -101,6 +101,10 @@ console.log('');
         // 提交版本号变更
         runCommand('git add package.json src-tauri/tauri.conf.json');
         runCommand(`git commit -m "chore: bump version to ${newVersion}"`);
+        
+        // 立即推送版本变更，防止后续构建失败导致忘记推送
+        console.log('[信息] 正在推送版本号变更...');
+        runCommand('git push');
     }
 
     // 3. 加载签名密钥
@@ -183,6 +187,19 @@ console.log('');
     console.log('构建产物位于 "release/" 文件夹中。');
     console.log('代码和标签已推送到 GitHub。');
     console.log('========================================');
+
+    console.log('\n[相关链接]');
+    console.log('GitHub 仓库: https://github.com/neko233-com/neko233-hardware-viewer');
+    console.log('GitHub Actions: https://github.com/neko233-com/neko233-hardware-viewer/actions');
+    console.log(`本地发布目录: ${releaseDir}`);
+
+    console.log('\n[信息] 正在打开发布目录...');
+    try {
+        // Windows 下打开文件夹
+        execSync(`start "" "${releaseDir}"`);
+    } catch (e) {
+        console.warn('[警告] 无法自动打开文件夹:', e.message);
+    }
     
     rl.close();
 })();
