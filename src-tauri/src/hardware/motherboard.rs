@@ -15,6 +15,8 @@ pub struct MotherboardInfo {
     pub ssd_slots: SlotInfo,
     #[serde(skip_deserializing, default)]
     pub gpu_slots: SlotInfo,
+    #[serde(skip_deserializing, default)]
+    pub ram_slots: SlotInfo,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
@@ -33,15 +35,31 @@ struct SystemSlot {
 }
 
 pub fn get_motherboard_info(ctx: &HardwareContext) -> Result<Vec<MotherboardInfo>> {
-    let mut boards: Vec<MotherboardInfo> = ctx.wmi_con.raw_query("SELECT * FROM Win32_BaseBoard")?;
+    let wmi = ctx.get_wmi()?;
+    let mut boards: Vec<MotherboardInfo> = wmi.raw_query("SELECT * FROM Win32_BaseBoard")?;
     
-    // Fetch Slots - Use unwrap_or_default to handle cases where Win32_SystemSlot is missing or fails
-    let slots: Vec<SystemSlot> = ctx.wmi_con.raw_query("SELECT SlotDesignation, CurrentUsage, Description FROM Win32_SystemSlot").unwrap_or_default();
+    // Fetch Slots
+    let slots: Vec<SystemSlot> = wmi.raw_query("SELECT SlotDesignation, CurrentUsage, Description FROM Win32_SystemSlot").unwrap_or_default();
+
+    // Fetch RAM Slots Info
+    #[derive(Deserialize, Debug)]
+    #[serde(rename_all = "PascalCase")]
+    struct MemArray {
+        memory_devices: Option<u16>,
+    }
+    let mem_arrays: Vec<MemArray> = wmi.raw_query("SELECT MemoryDevices FROM Win32_PhysicalMemoryArray").unwrap_or_default();
+    let total_ram_slots = mem_arrays.first().and_then(|m| m.memory_devices).unwrap_or(0) as u32;
+    
+    #[derive(Deserialize, Debug)]
+    #[serde(rename_all = "PascalCase")]
+    struct PhysMem {
+        capacity: u64,
+    }
+    let phys_mems: Vec<PhysMem> = wmi.raw_query("SELECT Capacity FROM Win32_PhysicalMemory").unwrap_or_default();
+    let used_ram_slots = phys_mems.len() as u32;
 
     for board in &mut boards {
-        // 1. Extract Chipset from Product (Simple Heuristic)
-        // e.g. "X670E GAMING PLUS" -> "X670E"
-        // Common chipsets: X670, B650, Z790, B760, Z690, B660, X570, B550, etc.
+        // 1. Extract Chipset
         let product_upper = board.product.to_uppercase();
         let chipsets = vec![
             "X870", "X670E", "X670", "B650E", "B650", "A620", // AMD AM5
@@ -76,20 +94,22 @@ pub fn get_motherboard_info(ctx: &HardwareContext) -> Result<Vec<MotherboardInfo
             }
             
             // SSD Slots (M.2)
-            // Note: Win32_SystemSlot often misses M.2 slots on some boards, but it's the best standard way.
             if des.contains("M.2") || des.contains("M2_") {
                 ssd_info.total += 1;
                 if is_used {
                     ssd_info.used += 1;
                 }
-                // Try to guess spec from name if possible, otherwise just list
-                // e.g. M2_1 (CPU_PCIE5.0)
                 ssd_info.details.push(format!("{}: {}", slot.slot_designation.clone().unwrap_or_default(), if is_used { "In Use" } else { "Empty" }));
             }
         }
         
         board.ssd_slots = ssd_info;
         board.gpu_slots = gpu_info;
+        board.ram_slots = SlotInfo {
+            total: total_ram_slots,
+            used: used_ram_slots,
+            details: vec![format!("Used {} of {} slots", used_ram_slots, total_ram_slots)],
+        };
     }
 
     Ok(boards)

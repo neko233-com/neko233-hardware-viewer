@@ -58,13 +58,14 @@ pub fn score_gpu(vram_bytes: u64) -> Score {
     }
 }
 
-pub fn score_disk(size_bytes: u64) -> Score {
+pub fn score_disk(is_ssd: bool, is_nvme: bool, size_bytes: u64) -> Score {
     let size_gb = size_bytes / 1024 / 1024 / 1024;
-    if size_gb >= 1000 {
+    
+    if is_nvme && size_gb >= 1000 {
         Score::Excellent
-    } else if size_gb >= 500 {
+    } else if is_ssd && size_gb >= 500 {
         Score::Good
-    } else if size_gb >= 250 {
+    } else if is_ssd && size_gb >= 250 {
         Score::Average
     } else {
         Score::Poor
@@ -96,11 +97,18 @@ pub fn calculate_gpu_score_num(vram_bytes: u64) -> u32 {
     score as u32
 }
 
-pub fn calculate_disk_score_num(size_bytes: u64) -> u32 {
+pub fn calculate_disk_score_num(is_ssd: bool, is_nvme: bool, size_bytes: u64) -> u32 {
     let size_gb = size_bytes / 1024 / 1024 / 1024;
-    // Formula: Size / 10
-    // Example: 1000GB -> 100
-    // Example: 500GB -> 50
-    let score = size_gb as f32 / 10.0;
+    // Base score from size
+    let mut score = size_gb as f32 / 10.0;
+    
+    // Bonus for SSD and NVMe
+    if is_ssd {
+        score += 20.0;
+    }
+    if is_nvme {
+        score += 30.0;
+    }
+    
     score as u32
 }

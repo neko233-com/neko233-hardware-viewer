@@ -12,6 +12,7 @@ use std::process::Command;
 use std::sync::Mutex;
 use std::fs;
 use sysinfo::System;
+use tauri::Emitter;
 use winreg::enums::*;
 use winreg::RegKey;
 
@@ -57,10 +58,9 @@ fn get_boot_time() -> u64 {
 #[tauri::command]
 fn get_system_usage(state: tauri::State<AppState>) -> SystemUsage {
     let mut sys = state.sys.lock().unwrap();
-    sys.refresh_cpu_all();
-    sys.refresh_memory();
+    sys.refresh_all();
     
-    let cpu_usage = sys.global_cpu_usage();
+    let cpu_usage = sys.global_cpu_info().cpu_usage();
     let memory_used = sys.used_memory();
     let memory_total = sys.total_memory();
 
@@ -110,86 +110,147 @@ struct FullHardwareInfo {
     ram: ScoredRam,
     disks: Vec<ScoredDisk>,
     sound: Vec<hardware::sound::SoundInfo>,
+    monitor: Vec<hardware::monitor::MonitorInfo>,
+    network: Vec<hardware::network::NetworkInfo>,
+    usb: Vec<hardware::peripherals::PnPDevice>,
+    camera: Vec<hardware::peripherals::PnPDevice>,
+    bluetooth: Vec<hardware::peripherals::PnPDevice>,
 }
 
 #[tauri::command]
 fn get_hardware_info() -> Result<FullHardwareInfo, String> {
-    let ctx = HardwareContext::new().map_err(|e| e.to_string())?;
-
-    let motherboard = hardware::motherboard::get_motherboard_info(&ctx).map_err(|e| e.to_string())?;
+    // Parallelize hardware scans to improve startup time
     
-    let cpus = hardware::cpu::get_cpu_info(&ctx).map_err(|e| e.to_string())?;
-    let scored_cpus = cpus.into_iter().map(|cpu| {
-        let score = scoring::score_cpu(cpu.number_of_cores, cpu.max_clock_speed);
-        let score_num = scoring::calculate_cpu_score_num(cpu.number_of_cores, cpu.max_clock_speed);
-        ScoredCpu {
-            info: cpu,
-            score: format!("{:?}", score),
-            score_num,
-        }
-    }).collect();
+    let motherboard_handle = std::thread::spawn(|| {
+        let mut ctx = HardwareContext::new();
+        ctx.init_wmi().map_err(|e| e.to_string())?;
+        hardware::motherboard::get_motherboard_info(&ctx).map_err(|e| e.to_string())
+    });
 
-    let gpus = hardware::gpu::get_gpu_info(&ctx).map_err(|e| e.to_string())?;
-    let scored_gpus = gpus.into_iter().map(|gpu| {
-        let (score, score_num) = if let Some(ram) = gpu.adapter_ram {
-             (format!("{:?}", scoring::score_gpu(ram)), scoring::calculate_gpu_score_num(ram))
+    let cpu_handle = std::thread::spawn(|| {
+        let mut ctx = HardwareContext::new();
+        // CPU uses sysinfo primarily, so we don't init WMI unless fallback is needed inside get_cpu_info
+        // But get_cpu_info takes &mut ctx and might call get_cpu_info_wmi which needs WMI.
+        // We should update get_cpu_info to init WMI if needed.
+        let cpus = hardware::cpu::get_cpu_info(&mut ctx).map_err(|e| e.to_string())?;
+        let scored_cpus: Vec<ScoredCpu> = cpus.into_iter().map(|cpu| {
+            let score = scoring::score_cpu(cpu.number_of_cores, cpu.max_clock_speed);
+            let score_num = scoring::calculate_cpu_score_num(cpu.number_of_cores, cpu.max_clock_speed);
+            ScoredCpu {
+                info: cpu,
+                score: format!("{:?}", score),
+                score_num,
+            }
+        }).collect();
+        Ok::<Vec<ScoredCpu>, String>(scored_cpus)
+    });
+
+    let gpu_handle = std::thread::spawn(|| {
+        let mut ctx = HardwareContext::new();
+        ctx.init_wmi().map_err(|e| e.to_string())?;
+        let gpus = hardware::gpu::get_gpu_info(&ctx).map_err(|e| e.to_string())?;
+        let scored_gpus: Vec<ScoredGpu> = gpus.into_iter().map(|gpu| {
+            let (score, score_num) = if let Some(ram) = gpu.adapter_ram {
+                 (format!("{:?}", scoring::score_gpu(ram)), scoring::calculate_gpu_score_num(ram))
+            } else {
+                 ("Unknown".to_string(), 0)
+            };
+            ScoredGpu {
+                info: gpu,
+                score,
+                score_num,
+            }
+        }).collect();
+        Ok::<Vec<ScoredGpu>, String>(scored_gpus)
+    });
+
+    let ram_handle = std::thread::spawn(|| {
+        let mut ctx = HardwareContext::new();
+        ctx.init_wmi().map_err(|e| e.to_string())?;
+        let mems = hardware::memory::get_memory_info(&mut ctx).map_err(|e| e.to_string())?;
+        let mut total_cap = 0;
+        let mut speeds = Vec::new();
+        for mem in &mems {
+            total_cap += mem.capacity;
+            let speed = mem.configured_clock_speed.unwrap_or(mem.speed);
+            speeds.push(if speed > 0 { speed } else { mem.speed });
+        }
+        let total_gb = total_cap / 1024 / 1024 / 1024;
+        let avg_speed = if !speeds.is_empty() {
+            speeds.iter().sum::<u32>() / speeds.len() as u32
         } else {
-             ("Unknown".to_string(), 0)
+            0
         };
-        ScoredGpu {
-            info: gpu,
-            score,
-            score_num,
-        }
-    }).collect();
+        let ram_score = format!("{:?}", scoring::score_ram(total_gb, avg_speed));
+        let ram_score_num = scoring::calculate_ram_score_num(total_gb, avg_speed);
+        Ok::<ScoredRam, String>(ScoredRam {
+            info: mems,
+            total_gb,
+            avg_speed,
+            score: ram_score,
+            score_num: ram_score_num,
+        })
+    });
 
-    let mems = hardware::memory::get_memory_info(&ctx).map_err(|e| e.to_string())?;
-    let mut total_cap = 0;
-    let mut speeds = Vec::new();
-    for mem in &mems {
-        total_cap += mem.capacity;
-        let speed = mem.configured_clock_speed.unwrap_or(mem.speed);
-        speeds.push(if speed > 0 { speed } else { mem.speed });
-    }
-    let total_gb = total_cap / 1024 / 1024 / 1024;
-    let avg_speed = if !speeds.is_empty() {
-        speeds.iter().sum::<u32>() / speeds.len() as u32
-    } else {
-        0
-    };
-    let ram_score = format!("{:?}", scoring::score_ram(total_gb, avg_speed));
-    let ram_score_num = scoring::calculate_ram_score_num(total_gb, avg_speed);
-    let scored_ram = ScoredRam {
-        info: mems,
-        total_gb,
-        avg_speed,
-        score: ram_score,
-        score_num: ram_score_num,
-    };
+    let disk_handle = std::thread::spawn(|| {
+        let mut ctx = HardwareContext::new();
+        ctx.init_wmi().map_err(|e| e.to_string())?;
+        let disks = hardware::disk::get_disk_info(&ctx).map_err(|e| e.to_string())?;
+        let scored_disks: Vec<ScoredDisk> = disks.into_iter().map(|disk| {
+            let size = disk.size;
+            let is_ssd = disk.media_type.to_lowercase().contains("ssd");
+            let is_nvme = disk.bus_type.to_lowercase().contains("nvme");
+            let score = scoring::score_disk(is_ssd, is_nvme, size);
+            let score_num = scoring::calculate_disk_score_num(is_ssd, is_nvme, size);
+            ScoredDisk {
+                info: disk,
+                score: format!("{:?}", score),
+                score_num,
+            }
+        }).collect();
+        Ok::<Vec<ScoredDisk>, String>(scored_disks)
+    });
 
-    let disks = hardware::disk::get_disk_info(&ctx).map_err(|e| e.to_string())?;
-    let scored_disks = disks.into_iter().map(|disk| {
-        let (score, score_num) = if let Some(size) = disk.size {
-            (format!("{:?}", scoring::score_disk(size)), scoring::calculate_disk_score_num(size))
-        } else {
-            ("Unknown".to_string(), 0)
-        };
-        ScoredDisk {
-            info: disk,
-            score,
-            score_num,
-        }
-    }).collect();
+    let misc_handle = std::thread::spawn(|| {
+        let mut ctx = HardwareContext::new();
+        ctx.init_wmi().map_err(|e| e.to_string())?;
+        let sound = hardware::sound::get_sound_info(&ctx).map_err(|e| e.to_string())?;
+        let monitor = hardware::monitor::get_monitor_info(&ctx).unwrap_or_default();
+        let network = hardware::network::get_network_info(&ctx).unwrap_or_default();
+        Ok::<(Vec<hardware::sound::SoundInfo>, Vec<hardware::monitor::MonitorInfo>, Vec<hardware::network::NetworkInfo>), String>((sound, monitor, network))
+    });
 
-    let sound = hardware::sound::get_sound_info(&ctx).map_err(|e| e.to_string())?;
+    let peripherals_handle = std::thread::spawn(|| {
+        // let mut ctx = HardwareContext::new();
+        // ctx.init_wmi().map_err(|e| e.to_string())?;
+        // let usb = hardware::peripherals::get_usb_devices(&ctx).unwrap_or_default();
+        // let camera = hardware::peripherals::get_camera_devices(&ctx).unwrap_or_default();
+        // let bluetooth = hardware::peripherals::get_bluetooth_devices(&ctx).unwrap_or_default();
+        // Ok::<(Vec<hardware::peripherals::PnPDevice>, Vec<hardware::peripherals::PnPDevice>, Vec<hardware::peripherals::PnPDevice>), String>((usb, camera, bluetooth))
+        Ok::<(Vec<hardware::peripherals::PnPDevice>, Vec<hardware::peripherals::PnPDevice>, Vec<hardware::peripherals::PnPDevice>), String>((vec![], vec![], vec![]))
+    });
+
+    // Join all threads and collect results
+    let motherboard = motherboard_handle.join().map_err(|_| "Motherboard thread panicked".to_string())??;
+    let cpu = cpu_handle.join().map_err(|_| "CPU thread panicked".to_string())??;
+    let gpu = gpu_handle.join().map_err(|_| "GPU thread panicked".to_string())??;
+    let ram = ram_handle.join().map_err(|_| "RAM thread panicked".to_string())??;
+    let disks = disk_handle.join().map_err(|_| "Disk thread panicked".to_string())??;
+    let (sound, monitor, network) = misc_handle.join().map_err(|_| "Misc thread panicked".to_string())??;
+    let (usb, camera, bluetooth) = peripherals_handle.join().map_err(|_| "Peripherals thread panicked".to_string())??;
 
     Ok(FullHardwareInfo {
         motherboard,
-        cpu: scored_cpus,
-        gpu: scored_gpus,
-        ram: scored_ram,
-        disks: scored_disks,
+        cpu,
+        gpu,
+        ram,
+        disks,
         sound,
+        monitor,
+        network,
+        usb,
+        camera,
+        bluetooth,
     })
 }
 
@@ -687,6 +748,141 @@ fn enable_large_system_cache() -> Result<String, String> {
     }
 }
 
+#[derive(Serialize)]
+struct PeripheralsInfo {
+    usb: Vec<hardware::peripherals::PnPDevice>,
+    camera: Vec<hardware::peripherals::PnPDevice>,
+    bluetooth: Vec<hardware::peripherals::PnPDevice>,
+}
+
+#[tauri::command]
+fn get_motherboard_info_command() -> Result<Vec<hardware::motherboard::MotherboardInfo>, String> {
+    let mut ctx = HardwareContext::new();
+    ctx.init_wmi().map_err(|e| e.to_string())?;
+    hardware::motherboard::get_motherboard_info(&ctx).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_cpu_info_command() -> Result<Vec<ScoredCpu>, String> {
+    let mut ctx = HardwareContext::new();
+    let cpus = hardware::cpu::get_cpu_info(&mut ctx).map_err(|e| e.to_string())?;
+    let scored_cpus: Vec<ScoredCpu> = cpus.into_iter().map(|cpu| {
+        let score = scoring::score_cpu(cpu.number_of_cores, cpu.max_clock_speed);
+        let score_num = scoring::calculate_cpu_score_num(cpu.number_of_cores, cpu.max_clock_speed);
+        ScoredCpu {
+            info: cpu,
+            score: format!("{:?}", score),
+            score_num,
+        }
+    }).collect();
+    Ok(scored_cpus)
+}
+
+#[tauri::command]
+fn get_gpu_info_command() -> Result<Vec<ScoredGpu>, String> {
+    let mut ctx = HardwareContext::new();
+    ctx.init_wmi().map_err(|e| e.to_string())?;
+    let gpus = hardware::gpu::get_gpu_info(&ctx).map_err(|e| e.to_string())?;
+    let scored_gpus: Vec<ScoredGpu> = gpus.into_iter().map(|gpu| {
+        let (score, score_num) = if let Some(ram) = gpu.adapter_ram {
+             (format!("{:?}", scoring::score_gpu(ram)), scoring::calculate_gpu_score_num(ram))
+        } else {
+             ("Unknown".to_string(), 0)
+        };
+        ScoredGpu {
+            info: gpu,
+            score,
+            score_num,
+        }
+    }).collect();
+    Ok(scored_gpus)
+}
+
+#[tauri::command]
+fn get_ram_info_command() -> Result<ScoredRam, String> {
+    let mut ctx = HardwareContext::new();
+    ctx.init_wmi().map_err(|e| e.to_string())?;
+    let mems = hardware::memory::get_memory_info(&mut ctx).map_err(|e| e.to_string())?;
+    let mut total_cap = 0;
+    let mut speeds = Vec::new();
+    for mem in &mems {
+        total_cap += mem.capacity;
+        let speed = mem.configured_clock_speed.unwrap_or(mem.speed);
+        speeds.push(if speed > 0 { speed } else { mem.speed });
+    }
+    let total_gb = total_cap / 1024 / 1024 / 1024;
+    let avg_speed = if !speeds.is_empty() {
+        speeds.iter().sum::<u32>() / speeds.len() as u32
+    } else {
+        0
+    };
+    let ram_score = format!("{:?}", scoring::score_ram(total_gb, avg_speed));
+    let ram_score_num = scoring::calculate_ram_score_num(total_gb, avg_speed);
+    Ok(ScoredRam {
+        info: mems,
+        total_gb,
+        avg_speed,
+        score: ram_score,
+        score_num: ram_score_num,
+    })
+}
+
+#[tauri::command]
+fn get_disk_info_command() -> Result<Vec<ScoredDisk>, String> {
+    let mut ctx = HardwareContext::new();
+    ctx.init_wmi().map_err(|e| e.to_string())?;
+    let disks = hardware::disk::get_disk_info(&ctx).map_err(|e| e.to_string())?;
+    let scored_disks: Vec<ScoredDisk> = disks.into_iter().map(|disk| {
+        let size = disk.size;
+        let is_ssd = disk.media_type.to_lowercase().contains("ssd");
+        let is_nvme = disk.bus_type.to_lowercase().contains("nvme");
+        let score = scoring::score_disk(is_ssd, is_nvme, size);
+        let score_num = scoring::calculate_disk_score_num(is_ssd, is_nvme, size);
+        ScoredDisk {
+            info: disk,
+            score: format!("{:?}", score),
+            score_num,
+        }
+    }).collect();
+    Ok(scored_disks)
+}
+
+#[tauri::command]
+fn get_sound_info_command() -> Result<Vec<hardware::sound::SoundInfo>, String> {
+    let mut ctx = HardwareContext::new();
+    ctx.init_wmi().map_err(|e| e.to_string())?;
+    hardware::sound::get_sound_info(&ctx).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_monitor_info_command() -> Result<Vec<hardware::monitor::MonitorInfo>, String> {
+    let mut ctx = HardwareContext::new();
+    ctx.init_wmi().map_err(|e| e.to_string())?;
+    hardware::monitor::get_monitor_info(&ctx).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_network_info_command() -> Result<Vec<hardware::network::NetworkInfo>, String> {
+    let mut ctx = HardwareContext::new();
+    ctx.init_wmi().map_err(|e| e.to_string())?;
+    hardware::network::get_network_info(&ctx).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_peripherals_info_command() -> Result<PeripheralsInfo, String> {
+    let mut ctx = HardwareContext::new();
+    ctx.init_wmi().map_err(|e| e.to_string())?;
+    let usb = hardware::peripherals::get_usb_devices(&ctx).map_err(|e| e.to_string())?;
+    let camera = hardware::peripherals::get_camera_devices(&ctx).map_err(|e| e.to_string())?;
+    let bluetooth = hardware::peripherals::get_bluetooth_devices(&ctx).map_err(|e| e.to_string())?;
+    Ok(PeripheralsInfo { usb, camera, bluetooth })
+}
+
+mod optimization;
+mod diagnostics;
+mod apps;
+mod network_tools;
+
 fn main() {
     let sys = System::new_all();
     let app_state = AppState {
@@ -694,6 +890,10 @@ fn main() {
     };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             get_hardware_info, 
@@ -726,6 +926,46 @@ fn main() {
             enable_high_perf_plan,
             increase_fs_cache,
             enable_large_system_cache,
+            // Individual Hardware Commands
+            get_motherboard_info_command,
+            get_cpu_info_command,
+            get_gpu_info_command,
+            get_ram_info_command,
+            get_disk_info_command,
+            get_sound_info_command,
+            get_monitor_info_command,
+            get_network_info_command,
+            get_peripherals_info_command,
+            // Optimization
+            optimization::apply_optimization,
+            optimization::disable_telemetry,
+            optimization::disable_windows_update,
+            optimization::disable_hibernation,
+            optimization::disable_game_dvr,
+            optimization::disable_sticky_keys,
+            optimization::disable_mouse_acceleration,
+            optimization::disable_lock_screen,
+            optimization::disable_bing_search,
+            optimization::disable_aero_shake,
+            optimization::disable_timeline,
+            // Diagnostics
+            diagnostics::check_disk_health,
+            diagnostics::check_system_file_integrity,
+            diagnostics::check_dism_health,
+            diagnostics::check_battery_health,
+            diagnostics::check_network_latency,
+            diagnostics::check_dns_resolution,
+            diagnostics::check_activation_status_detailed,
+            diagnostics::check_tpm_status,
+            diagnostics::check_secure_boot_status,
+            diagnostics::check_antivirus_status,
+            // Apps
+            apps::get_installed_apps,
+            apps::uninstall_app,
+            // Network Tools
+            network_tools::get_network_interfaces_detailed,
+            network_tools::ping_hosts,
+            network_tools::get_public_ip,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

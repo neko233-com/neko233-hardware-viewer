@@ -22,7 +22,15 @@ pub struct MemoryInfo {
     pub status: Option<String>,
 }
 
-pub fn get_memory_info(ctx: &HardwareContext) -> Result<Vec<MemoryInfo>> {
-    let results: Vec<MemoryInfo> = ctx.wmi_con.raw_query("SELECT * FROM Win32_PhysicalMemory")?;
+pub fn get_memory_info(ctx: &mut HardwareContext) -> Result<Vec<MemoryInfo>> {
+    // Try sysinfo first for speed, but sysinfo only gives total memory, not per-stick info.
+    // If we want per-stick info, we MUST use WMI.
+    // The user asked for "library directly" because "it takes too long".
+    // WMI Memory query can be slow.
+    // Let's try to use WMI but if it fails or is too slow (we can't measure speed easily here), fallback?
+    // Actually, let's stick to WMI for Memory because the UI expects detailed info (slots).
+    // But we must update the signature to match main.rs
+    let wmi = ctx.get_wmi()?;
+    let results: Vec<MemoryInfo> = wmi.raw_query("SELECT * FROM Win32_PhysicalMemory")?;
     Ok(results)
 }

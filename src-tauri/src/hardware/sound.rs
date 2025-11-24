@@ -11,6 +11,7 @@ pub struct SoundInfo {
 }
 
 pub fn get_sound_info(ctx: &HardwareContext) -> Result<Vec<SoundInfo>> {
-    let results: Vec<SoundInfo> = ctx.wmi_con.raw_query("SELECT * FROM Win32_SoundDevice")?;
+    let wmi = ctx.get_wmi()?;
+    let results: Vec<SoundInfo> = wmi.raw_query("SELECT * FROM Win32_SoundDevice")?;
     Ok(results)
 }

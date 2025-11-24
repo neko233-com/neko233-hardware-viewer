@@ -1,57 +1,44 @@
 {
+  "productName": "neko233-hardware-viewer",
+  "version": "1.0.7",
+  "identifier": "com.neko233.hardwareviewer",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist",
-    "withGlobalTauri": false
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
   },
-  "package": {
-    "productName": "neko233-hardware-viewer",
-    "version": "1.0.7"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "window": {
-        "all": true
-      }
-    },
-    "updater": {
-      "active": true,
-      "endpoints": [
-        "https://github.com/neko233-com/neko233-hardware-viewer/releases/latest/download/latest.json"
-      ],
-      "dialog": false,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM3Qzk5RTREREZDRTBFQzAKUldUQURzN2ZUWjdKTjI4NGg3YmpYMkVMTmVRQ1hlZ1pGUXM4eld0LzBHdkhLd0toQThuZ2FTNFgK"
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.neko233.hardwareviewer",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/icon.ico"
-      ]
-    },
-    "security": {
-      "csp": null
-    },
+  "app": {
     "windows": [
       {
-        "fullscreen": false,
-        "resizable": true,
         "title": "Neko233 Hardware Viewer",
         "width": 1200,
         "height": 800,
-        "decorations": false,
-        "transparent": true
+        "resizable": true,
+        "fullscreen": false,
+        "label": "main"
       }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": ["default"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/neko233-com/neko233-hardware-viewer/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM3Qzk5RTREREZDRTBFQzAKUldUQURzN2ZUWjdKTjI4NGg3YmpYMkVMTmVRQ1hlZ1pGUXM4eld0LzBHdkhLd0toQThuZ2FTNFgK"
+    }
   }
 }
