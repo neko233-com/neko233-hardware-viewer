@@ -128,11 +128,19 @@ export default {
     updateAvailable: 'Update Available',
     updateNow: 'Update Now',
     noUpdate: 'You are using the latest version',
-    star: 'Star'
+    star: 'Star',
+    advanced: 'Advanced',
+    adminRights: 'Administrator Rights',
+    adminEnabled: 'Enabled',
+    adminDisabled: 'Disabled',
+    runAsAdmin: 'Run as Administrator',
+    restartAdminConfirm: 'Are you sure you want to restart as Administrator?'
   },
   optimization: {
     title: 'SYSTEM OPTIMIZATION',
     subtitle: 'TWEAK & BOOST PERFORMANCE',
+    adminRequired: 'ADMINISTRATOR PRIVILEGES REQUIRED',
+    adminRequiredDesc: 'Some optimizations require admin rights. Please enable them in Settings.',
     sectionTitle: 'Basic Tweaks',
     performanceTitle: 'Performance Tweaks',
     privacyTitle: 'Privacy & Telemetry',
@@ -236,6 +244,10 @@ export default {
     title: 'SYSTEM DIAGNOSTICS',
     subtitle: 'HEALTH CHECK & REPAIR',
     sectionTitle: 'Diagnostic Tools',
+    systemHealth: 'System Health',
+    networkTitle: 'Network',
+    securityTitle: 'Security',
+    powerActivation: 'Power & Activation',
     quickCheck: 'Quick Memory Check',
     quickCheckDesc: 'Allocates and tests 500MB of RAM for errors. Fast but less thorough.',
     fullCheck: 'Windows Memory Diagnostic',
@@ -284,6 +296,63 @@ export default {
     hasIGPU: 'Has iGPU',
     noIGPU: 'No iGPU',
     searchPlaceholder: 'Search Hardware...'
+  },
+  features: {
+    title: 'Features',
+    subtitle: 'Experimental & Easter Eggs',
+    fakeShutdown: 'Fake Shutdown',
+    fakeShutdownDesc: 'Simulate Windows Update screen to prevent others from using PC',
+    start: 'Start',
+    fakeUpdate: 'Fake Update',
+    fakeUpdateDesc: 'Fullscreen realistic Windows Update progress bar',
+    fakeBsod: 'Fake BSOD',
+    fakeBsodDesc: 'Simulate Blue Screen of Death',
+    cyberpunk: 'Cyberpunk Mode',
+    cyberpunkDesc: 'Apply global glitch art effects',
+    f11Hint: 'Press Ctrl + F11 to exit fake mode'
+  },
+  colorManagement: {
+    title: 'Color Management',
+    subtitle: 'Monitor Calibration & Config',
+    desc: 'Open Windows Color Management Control Panel to load ICC profiles or calibrate display.',
+    openColorCpl: 'Open Color Management'
+  },
+  win11: {
+    installTitle: 'Win11 Installer',
+    installSubtitle: 'Bypass Restrictions & Download',
+    bypassTpm: 'Bypass TPM 2.0',
+    bypassDesc: 'Modify Registry to allow Windows 11 on unsupported hardware',
+    applyBypass: 'Apply Bypass',
+    officialDownload: 'Official Download',
+    downloadDesc: 'Go to Microsoft official site to download Windows 11 ISO',
+    openMicrosoft: 'Open Website',
+    tweaksTitle: 'Win11 Tweaks',
+    tweaksSubtitle: 'UI & Experience Optimization',
+    classicContext: 'Classic Context Menu',
+    on: 'ON',
+    off: 'OFF',
+    showExt: 'Show File Extensions',
+    showHidden: 'Show Hidden Files',
+    restartExplorer: 'Restart Explorer',
+    restartExplorerBtn: 'Restart Now'
+  },
+  driver_cleaner: {
+    title: 'Driver Cleaner',
+    subtitle: 'Remove GPU Drivers Completely',
+    scanning: 'Scanning...',
+    scan: 'Scan Drivers',
+    cleanNvidia: 'Clean NVIDIA',
+    cleanAmd: 'Clean AMD',
+    provider: 'Provider',
+    version: 'Version',
+    date: 'Date',
+    oemId: 'OEM ID',
+    uninstall: 'Uninstall',
+    noDrivers: 'No drivers found'
+  },
+  infoBtn: {
+    cpu: 'CPU Details',
+    gpu: 'GPU Details'
   },
   taskManager: {
     title: 'Active Tasks'

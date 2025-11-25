@@ -969,7 +969,43 @@ fn main() {
             network_tools::get_network_interfaces_detailed,
             network_tools::ping_hosts,
             network_tools::get_public_ip,
+            is_admin,
+            restart_as_admin,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tauri::command]
+fn is_admin() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::*;
+        use winreg::RegKey;
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        hklm.open_subkey_with_flags("SOFTWARE", KEY_WRITE).is_ok()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
+}
+
+#[tauri::command]
+fn restart_as_admin() -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        let current_exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        
+        Command::new("powershell")
+            .args(&["Start-Process", "-FilePath", current_exe.to_str().unwrap(), "-Verb", "RunAs"])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+            
+        std::process::exit(0);
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Not supported on non-Windows platforms".to_string())
+    }
 }

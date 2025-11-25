@@ -78,6 +78,13 @@ export default {
     suffixX3D: '3D V-Cache (游戏性能强)',
     namingTimeline: '2023年起，Intel 移动端/部分桌面端启用 "Core Ultra" 命名；服务器端沿用 Xeon。'
   },
+  infoBtn: {
+    cpu: 'CPU 详情',
+    gpu: '显卡详情'
+  },
+  taskManager: {
+    title: '任务管理器'
+  },
   gpuInfo: {
     title: '显卡命名与规格 (近10年)',
     nvidiaTiers: 'RTX 5090/80 (旗舰) > 70 (高端) > 60 (主流) > 50 (入门)',
@@ -128,11 +135,19 @@ export default {
     updateAvailable: '发现新版本',
     updateNow: '立即更新',
     noUpdate: '当前已是最新版本',
-    star: '点赞'
+    star: '点赞',
+    advanced: '高级设置',
+    adminRights: '管理员权限',
+    adminEnabled: '已获取',
+    adminDisabled: '未获取',
+    runAsAdmin: '一键获取管理员权限',
+    restartAdminConfirm: '确定要重启应用以获取管理员权限吗？'
   },
   optimization: {
     title: '系统优化',
     subtitle: '性能调整与隐私保护',
+    adminRequired: '需要管理员权限',
+    adminRequiredDesc: '部分优化项需要管理员权限才能生效。请在设置中获取权限。',
     sectionTitle: '基础优化',
     performanceTitle: '性能优化',
     privacyTitle: '隐私与遥测',
@@ -236,6 +251,10 @@ export default {
     title: '系统诊断',
     subtitle: '系统健康检查与修复',
     sectionTitle: '诊断工具',
+    systemHealth: '系统健康',
+    networkTitle: '网络',
+    securityTitle: '安全',
+    powerActivation: '电源与激活',
     quickCheck: '快速内存检查',
     quickCheckDesc: '分配并测试 500MB 内存以查找错误。速度快但不如完整测试彻底。',
     fullCheck: 'Windows 内存诊断',
@@ -285,7 +304,57 @@ export default {
     noIGPU: '无核显',
     searchPlaceholder: '搜索硬件...'
   },
-  taskManager: {
-    title: '执行任务管理'
+  features: {
+    title: '功能管理',
+    subtitle: '实验性功能与彩蛋',
+    fakeShutdown: '伪装关机',
+    fakeShutdownDesc: '模拟 Windows 更新界面，防止他人使用电脑',
+    start: '启动',
+    fakeUpdate: '伪装更新',
+    fakeUpdateDesc: '全屏显示逼真的 Windows 更新进度条',
+    fakeBsod: '伪装蓝屏',
+    fakeBsodDesc: '模拟系统崩溃 (BSOD) 界面',
+    cyberpunk: '赛博朋克模式',
+    cyberpunkDesc: '应用全局故障艺术效果',
+    f11Hint: '按 Ctrl + F11 退出伪装模式'
+  },
+  colorManagement: {
+    title: '颜色管理',
+    subtitle: '显示器校准与配置',
+    desc: '打开 Windows 颜色管理控制面板以加载 ICC 配置文件或校准显示器。',
+    openColorCpl: '打开颜色管理'
+  },
+  win11: {
+    installTitle: 'Win11 安装助手',
+    installSubtitle: '绕过限制与下载',
+    bypassTpm: '绕过 TPM 2.0 检测',
+    bypassDesc: '修改注册表以允许在不兼容的硬件上安装 Windows 11',
+    applyBypass: '应用绕过补丁',
+    officialDownload: '官方下载',
+    downloadDesc: '前往 Microsoft 官网下载 Windows 11 镜像',
+    openMicrosoft: '打开官网',
+    tweaksTitle: 'Win11 调整',
+    tweaksSubtitle: '界面与体验优化',
+    classicContext: '经典右键菜单',
+    on: '开启',
+    off: '关闭',
+    showExt: '显示文件扩展名',
+    showHidden: '显示隐藏文件',
+    restartExplorer: '重启资源管理器',
+    restartExplorerBtn: '立即重启'
+  },
+  driver_cleaner: {
+    title: '驱动清理',
+    subtitle: '彻底移除显卡驱动',
+    scanning: '扫描中...',
+    scan: '扫描驱动',
+    cleanNvidia: '清理 NVIDIA',
+    cleanAmd: '清理 AMD',
+    provider: '提供商',
+    version: '版本',
+    date: '日期',
+    oemId: 'OEM ID',
+    uninstall: '卸载',
+    noDrivers: '未找到相关驱动'
   }
 }

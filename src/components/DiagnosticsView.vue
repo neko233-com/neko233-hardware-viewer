@@ -36,7 +36,7 @@
 
     <!-- System Health Section -->
     <div class="cp-section">
-      <div class="cp-section-title">System Health</div>
+      <div class="cp-section-title">{{ $t('diagnostics.systemHealth') }}</div>
       <div class="cp-grid">
         <div class="cp-card" v-for="item in healthItems" :key="item.key">
           <div class="cp-label">{{ $t(`diagnostics.${item.key}`) }}</div>
@@ -52,7 +52,7 @@
 
     <!-- Network Section -->
     <div class="cp-section">
-      <div class="cp-section-title">Network</div>
+      <div class="cp-section-title">{{ $t('diagnostics.networkTitle') }}</div>
       <div class="cp-grid">
         <div class="cp-card" v-for="item in networkItems" :key="item.key">
           <div class="cp-label">{{ $t(`diagnostics.${item.key}`) }}</div>
@@ -68,7 +68,7 @@
 
     <!-- Security Section -->
     <div class="cp-section">
-      <div class="cp-section-title">Security</div>
+      <div class="cp-section-title">{{ $t('diagnostics.securityTitle') }}</div>
       <div class="cp-grid">
         <div class="cp-card" v-for="item in securityItems" :key="item.key">
           <div class="cp-label">{{ $t(`diagnostics.${item.key}`) }}</div>
@@ -84,7 +84,7 @@
 
     <!-- Other Section -->
     <div class="cp-section">
-      <div class="cp-section-title">Power & Activation</div>
+      <div class="cp-section-title">{{ $t('diagnostics.powerActivation') }}</div>
       <div class="cp-grid">
         <div class="cp-card" v-for="item in otherItems" :key="item.key">
           <div class="cp-label">{{ $t(`diagnostics.${item.key}`) }}</div>

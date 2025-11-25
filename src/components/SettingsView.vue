@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="cp-container">
     <div class="cp-header">
       <h1 class="cp-title glitch" :data-text="$t('settings.title')">{{ $t('settings.title') }}</h1>
@@ -56,6 +56,23 @@
       </div>
     </div>
 
+    <div class="cp-section">
+      <div class="cp-section-title">{{ $t('settings.advanced') || 'ADVANCED' }}</div>
+      <div class="cp-card full-width">
+        <div class="version-info">
+          <div class="cp-label">{{ $t('settings.adminRights') }}</div>
+          <div class="cp-value" :class="{ 'text-green': isAdmin, 'text-red': !isAdmin }">
+            {{ isAdmin ? $t('settings.adminEnabled') : $t('settings.adminDisabled') }}
+          </div>
+        </div>
+        <div class="actions">
+          <button class="cp-btn danger" @click="restartAsAdmin" :disabled="isAdmin">
+            {{ $t('settings.runAsAdmin') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Update Toast (Local to this view or global? Keeping global logic in App.vue, but trigger here) -->
   </div>
 </template>
@@ -74,6 +91,7 @@ const autostartEnabled = ref(false);
 const autoUpdateEnabled = ref(true);
 const appVersion = ref('0.0.0');
 const checkingUpdate = ref(false);
+const isAdmin = ref(false);
 
 const openGithub = async () => {
   await open('https://github.com/neko233-com/neko233-hardware-viewer');
@@ -118,9 +136,21 @@ const manualCheckUpdate = async () => {
   }
 };
 
+const restartAsAdmin = async () => {
+  const yes = confirm(t('settings.restartAdminConfirm') || 'Restart as Administrator?');
+  if (yes) {
+    try {
+      await invoke('restart_as_admin');
+    } catch (e) {
+      alert('Failed to restart: ' + e);
+    }
+  }
+};
+
 onMounted(async () => {
   appVersion.value = await getVersion();
   autostartEnabled.value = await invoke('check_autostart');
+  isAdmin.value = await invoke('is_admin');
   
   const savedAuto = localStorage.getItem('autoUpdate');
   if (savedAuto !== null) {
@@ -280,5 +310,13 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(26px);
   background-color: var(--cp-primary);
+}
+
+.text-green {
+  color: #0f0 !important;
+}
+
+.text-red {
+  color: #f00 !important;
 }
 </style>

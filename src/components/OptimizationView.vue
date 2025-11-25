@@ -5,6 +5,14 @@
       <div class="cp-subtitle">{{ $t('optimization.subtitle') }}</div>
     </div>
 
+    <div v-if="!isAdmin" class="admin-warning">
+      <div class="warning-icon">⚠️</div>
+      <div class="warning-text">
+        <h3>{{ $t('optimization.adminRequired') }}</h3>
+        <p>{{ $t('optimization.adminRequiredDesc') }}</p>
+      </div>
+    </div>
+
     <!-- Search Filter -->
     <div class="cp-section" style="margin-bottom: 20px;">
       <input 
@@ -42,12 +50,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 
 const loading = ref(false);
 const message = ref('');
 const searchQuery = ref('');
+const isAdmin = ref(true);
+
+onMounted(async () => {
+  isAdmin.value = await invoke('is_admin');
+});
 
 interface Tweak {
   id: string;
@@ -141,5 +154,38 @@ async function applyTweak(id: string, enable: boolean) {
   border: 1px solid #333;
   background: rgba(0,0,0,0.5);
   color: #fff;
+}
+
+.admin-warning {
+  background: rgba(255, 0, 0, 0.2);
+  border: 2px solid #f00;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  animation: pulse 2s infinite;
+}
+
+.warning-icon {
+  font-size: 2em;
+}
+
+.warning-text h3 {
+  margin: 0 0 5px 0;
+  color: #f00;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.warning-text p {
+  margin: 0;
+  color: #fff;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
 }
 </style>
