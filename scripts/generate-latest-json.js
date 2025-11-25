@@ -33,12 +33,14 @@ let installerZip = findArtifact('.msi.zip');
 let installerSig = findArtifact('.msi.zip.sig');
 
 if (!installerZip || !installerSig) {
-  console.log("MSI artifacts not found, checking NSIS...");
+  console.log("MSI artifacts not found (zip/sig), checking NSIS...");
   // If MSI not found, try to look in sibling 'nsis' directory if we are in 'msi'
   if (targetDir.endsWith('msi')) {
     const nsisDir = path.join(path.dirname(targetDir), 'nsis');
+    console.log(`Checking NSIS directory: ${nsisDir}`);
     if (fs.existsSync(nsisDir)) {
       const nsisFiles = fs.readdirSync(nsisDir);
+      console.log(`Files in NSIS dir:`, nsisFiles);
       const nsisZip = nsisFiles.find(f => f.endsWith('.nsis.zip'));
       const nsisSig = nsisFiles.find(f => f.endsWith('.nsis.zip.sig'));
       if (nsisZip && nsisSig) {
@@ -51,10 +53,14 @@ if (!installerZip || !installerSig) {
         const cleanVersion = version.startsWith('v') ? version.substring(1) : version;
         platforms['windows-x86_64'] = {
           signature: sigContent,
-          url: `https://github.com/neko233-com/neko233-hardware-viewer/releases/download/v${cleanVersion}/${nsisZip}`
+          url: `https://raw.githubusercontent.com/neko233-com/neko233-hardware-viewer/main/release/neko233-hardware-viewer_${cleanVersion}_x64-setup.nsis.zip`
         };
         console.log(`Found NSIS artifact: ${nsisZip}`);
+      } else {
+          console.log("NSIS zip or sig not found.");
       }
+    } else {
+        console.log("NSIS directory does not exist.");
     }
   }
 } else {
@@ -62,7 +68,7 @@ if (!installerZip || !installerSig) {
   const cleanVersion = version.startsWith('v') ? version.substring(1) : version;
   platforms['windows-x86_64'] = {
     signature: sigContent,
-    url: `https://github.com/neko233-com/neko233-hardware-viewer/releases/download/v${cleanVersion}/${installerZip}`
+    url: `https://raw.githubusercontent.com/neko233-com/neko233-hardware-viewer/main/release/neko233-hardware-viewer_${cleanVersion}_x64_en-US.msi.zip`
   };
   console.log(`Found MSI artifact: ${installerZip}`);
 }

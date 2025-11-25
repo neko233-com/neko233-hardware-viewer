@@ -122,7 +122,12 @@ console.log('');
             process.env.TAURI_SIGNING_PRIVATE_KEY = keyContent;
             process.env.TAURI_SIGNING_KEY_PASSWORD = '';
             console.log(`[信息] 已加载签名密钥 (长度: ${keyContent.length})`);
-            console.log(`[信息] 密钥预览: ${keyContent.substring(0, 10)}...`);
+            // 验证环境变量是否设置成功
+            if (process.env.TAURI_SIGNING_PRIVATE_KEY) {
+                console.log('[信息] 环境变量 TAURI_SIGNING_PRIVATE_KEY 已设置');
+            } else {
+                console.error('[错误] 环境变量 TAURI_SIGNING_PRIVATE_KEY 设置失败');
+            }
         } catch (e) {
             console.warn('[警告] 读取 tauri.key 失败:', e.message);
         }
@@ -166,23 +171,28 @@ console.log('');
         // 调用 generate-latest-json.js
         // 注意：这里我们假设脚本在 scripts/generate-latest-json.js
         const scriptPath = path.join(__dirname, 'scripts', 'generate-latest-json.js');
-        runCommand(`node "${scriptPath}" "${jsonTargetDir}" "${newVersion}" "Release v${newVersion}"`);
+        // 允许失败，以便在签名失败时仍能继续发布流程
+        const success = runCommand(`node "${scriptPath}" "${jsonTargetDir}" "${newVersion}" "Release v${newVersion}"`, true);
         
-        // 复制 latest.json 到项目根目录，以便提交
-        const generatedJsonPath = path.join(jsonTargetDir, 'latest.json');
-        if (fs.existsSync(generatedJsonPath)) {
-            fs.copyFileSync(generatedJsonPath, path.join(__dirname, 'latest.json'));
-            console.log('[信息] 已将 latest.json 复制到项目根目录');
-            
-            // 提交 latest.json
-            runCommand('git add latest.json');
-            // 忽略可能的空提交错误
-            runCommand('git commit -m "chore: update latest.json"', true);
+        if (success) {
+            // 复制 latest.json 到项目根目录，以便提交
+            const generatedJsonPath = path.join(jsonTargetDir, 'latest.json');
+            if (fs.existsSync(generatedJsonPath)) {
+                fs.copyFileSync(generatedJsonPath, path.join(__dirname, 'latest.json'));
+                console.log('[信息] 已将 latest.json 复制到项目根目录');
+                
+                // 提交 latest.json
+                runCommand('git add latest.json');
+                // 忽略可能的空提交错误
+                runCommand('git commit -m "chore: update latest.json"', true);
+            } else {
+                console.warn('[警告] 未找到生成的 latest.json');
+            }
         } else {
-            console.warn('[警告] 未找到生成的 latest.json');
+             console.warn('[警告] generate-latest-json.js 执行失败。将跳过 latest.json 生成。注意：自动更新将不可用。');
         }
     } catch (e) {
-        console.error('[错误] 生成 latest.json 失败:', e.message);
+        console.error('[错误] 生成 latest.json 过程异常:', e.message);
     }
 
     // 5. 复制构建产物
