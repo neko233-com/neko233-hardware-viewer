@@ -112,14 +112,30 @@ console.log('');
     if (fs.existsSync(keyPath)) {
         try {
             const keyContent = fs.readFileSync(keyPath, 'utf-8').trim();
+            // Tauri v1
             process.env.TAURI_PRIVATE_KEY = keyContent;
             process.env.TAURI_KEY_PASSWORD = ''; 
-            console.log('[信息] 已从 tauri.key 加载签名密钥');
+            // Tauri v2
+            process.env.TAURI_SIGNING_PRIVATE_KEY = keyContent;
+            process.env.TAURI_SIGNING_KEY_PASSWORD = '';
+            console.log('[信息] 已从 tauri.key 加载签名密钥 (设置了 TAURI_PRIVATE_KEY 和 TAURI_SIGNING_PRIVATE_KEY)');
         } catch (e) {
             console.warn('[警告] 读取 tauri.key 失败:', e.message);
         }
     } else {
         console.warn('[警告] 未找到 tauri.key。如果启用了自动更新，构建可能会失败。');
+    }
+
+    // 3.5 清理旧构建产物
+    console.log('\n[步骤 3.5] 清理旧构建产物...');
+    const targetBundleDir = path.join(__dirname, 'src-tauri', 'target', 'x86_64-pc-windows-msvc', 'release', 'bundle');
+    if (fs.existsSync(targetBundleDir)) {
+        try {
+            fs.rmSync(targetBundleDir, { recursive: true, force: true });
+            console.log(`[信息] 已清理构建目录: ${targetBundleDir}`);
+        } catch (e) {
+            console.warn('[警告] 清理构建目录失败:', e.message);
+        }
     }
 
     // 4. 构建
