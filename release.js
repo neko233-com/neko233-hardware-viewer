@@ -12,10 +12,13 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-function runCommand(command, ignoreError = false) {
+function runCommand(command, ignoreError = false, customEnv = null) {
     try {
         console.log(`> ${command}`);
-        execSync(command, { stdio: 'inherit' });
+        execSync(command, { 
+            stdio: 'inherit',
+            env: customEnv || process.env 
+        });
         return true;
     } catch (error) {
         if (!ignoreError) {
@@ -118,7 +121,8 @@ console.log('');
             // Tauri v2
             process.env.TAURI_SIGNING_PRIVATE_KEY = keyContent;
             process.env.TAURI_SIGNING_KEY_PASSWORD = '';
-            console.log('[信息] 已从 tauri.key 加载签名密钥 (设置了 TAURI_PRIVATE_KEY 和 TAURI_SIGNING_PRIVATE_KEY)');
+            console.log(`[信息] 已加载签名密钥 (长度: ${keyContent.length})`);
+            console.log(`[信息] 密钥预览: ${keyContent.substring(0, 10)}...`);
         } catch (e) {
             console.warn('[警告] 读取 tauri.key 失败:', e.message);
         }
@@ -141,7 +145,8 @@ console.log('');
     // 4. 构建
     console.log('\n[步骤 4] 正在构建应用程序...');
     const startTime = Date.now();
-    runCommand('npm run build:win');
+    // 添加 --verbose 以查看构建详情，特别是签名部分
+    runCommand('npm run build:win -- --verbose');
 
     // 4.5 生成 latest.json
     console.log('\n[步骤 4.5] 生成 latest.json...');
