@@ -113,6 +113,9 @@ export default {
     apps: 'App Manager',
     settings: 'Settings'
   },
+  buttons: {
+    settings: 'Settings'
+  },
   settings: {
     title: 'System Settings',
     general: 'General',

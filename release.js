@@ -127,6 +127,43 @@ console.log('');
     const startTime = Date.now();
     runCommand('npm run build:win');
 
+    // 4.5 生成 latest.json
+    console.log('\n[步骤 4.5] 生成 latest.json...');
+    const buildTargetBase = path.join(__dirname, 'src-tauri', 'target', 'x86_64-pc-windows-msvc', 'release', 'bundle');
+    const buildMsiDir = path.join(buildTargetBase, 'msi');
+    
+    // 确保 msi 目录存在，如果不存在尝试 nsis
+    let jsonTargetDir = buildMsiDir;
+    if (!fs.existsSync(buildMsiDir)) {
+        const nsisDir = path.join(buildTargetBase, 'nsis');
+        if (fs.existsSync(nsisDir)) {
+            jsonTargetDir = nsisDir;
+        }
+    }
+
+    try {
+        // 调用 generate-latest-json.js
+        // 注意：这里我们假设脚本在 scripts/generate-latest-json.js
+        const scriptPath = path.join(__dirname, 'scripts', 'generate-latest-json.js');
+        runCommand(`node "${scriptPath}" "${jsonTargetDir}" "${newVersion}" "Release v${newVersion}"`);
+        
+        // 复制 latest.json 到项目根目录，以便提交
+        const generatedJsonPath = path.join(jsonTargetDir, 'latest.json');
+        if (fs.existsSync(generatedJsonPath)) {
+            fs.copyFileSync(generatedJsonPath, path.join(__dirname, 'latest.json'));
+            console.log('[信息] 已将 latest.json 复制到项目根目录');
+            
+            // 提交 latest.json
+            runCommand('git add latest.json');
+            // 忽略可能的空提交错误
+            runCommand('git commit -m "chore: update latest.json"', true);
+        } else {
+            console.warn('[警告] 未找到生成的 latest.json');
+        }
+    } catch (e) {
+        console.error('[错误] 生成 latest.json 失败:', e.message);
+    }
+
     // 5. 复制构建产物
     console.log('\n[步骤 5] 处理构建产物...');
     const releaseDir = path.join(__dirname, 'release');
@@ -134,8 +171,9 @@ console.log('');
         fs.mkdirSync(releaseDir);
     }
 
-    const targetBase = path.join(__dirname, 'src-tauri', 'target', 'x86_64-pc-windows-msvc', 'release', 'bundle');
-    const msiDir = path.join(targetBase, 'msi');
+    // 复用上面的路径变量
+    const targetBase = buildTargetBase;
+    const msiDir = buildMsiDir;
     const nsisDir = path.join(targetBase, 'nsis');
 
     let copiedCount = 0;

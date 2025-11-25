@@ -113,6 +113,9 @@ export default {
     uninstall: '软件卸载',
     settings: '设置'
   },
+  buttons: {
+    settings: '设置'
+  },
   settings: {
     title: '系统设置',
     general: '常规',

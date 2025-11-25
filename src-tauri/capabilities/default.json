@@ -4,6 +4,12 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:app:default",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-start-dragging",
     "shell:allow-open",
     "shell:allow-execute",
     "updater:default",

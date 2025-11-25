@@ -16,6 +16,8 @@
         "height": 800,
         "resizable": true,
         "fullscreen": false,
+        "decorations": false,
+        "transparent": true,
         "label": "main"
       }
     ],
@@ -38,7 +40,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/neko233-com/neko233-hardware-viewer/releases/latest/download/latest.json"
+        "https://raw.githubusercontent.com/neko233-com/neko233-hardware-viewer/main/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM3Qzk5RTREREZDRTBFQzAKUldUQURzN2ZUWjdKTjI4NGg3YmpYMkVMTmVRQ1hlZ1pGUXM4eld0LzBHdkhLd0toQThuZ2FTNFgK"
     }
