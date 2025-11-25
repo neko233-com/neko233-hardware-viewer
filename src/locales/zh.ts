@@ -113,6 +113,20 @@ export default {
     uninstall: '软件卸载',
     settings: '设置'
   },
+  settings: {
+    title: '系统设置',
+    general: '常规',
+    autostart: '开机自启',
+    autoUpdate: '自动更新',
+    about: '关于',
+    currentVersion: '当前版本',
+    checkUpdate: '检查更新',
+    checking: '检查中...',
+    updateAvailable: '发现新版本',
+    updateNow: '立即更新',
+    noUpdate: '当前已是最新版本',
+    star: '点赞'
+  },
   optimization: {
     title: '系统优化',
     subtitle: '性能调整与隐私保护',

@@ -43,6 +43,12 @@
           <div class="cp-value large">{{ appVersion }}</div>
         </div>
         <div class="actions">
+          <button class="cp-btn" @click="openGithub">
+            GitHub
+          </button>
+          <button class="cp-btn" @click="openStar">
+            {{ $t('settings.star') }}
+          </button>
           <button class="cp-btn" @click="manualCheckUpdate" :disabled="checkingUpdate">
             {{ checkingUpdate ? $t('settings.checking') : $t('settings.checkUpdate') }}
           </button>
@@ -59,6 +65,7 @@ import { ref, onMounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { open } from '@tauri-apps/plugin-shell';
 import { getVersion } from '@tauri-apps/api/app';
 import { useI18n } from 'vue-i18n';
 
@@ -67,6 +74,14 @@ const autostartEnabled = ref(false);
 const autoUpdateEnabled = ref(true);
 const appVersion = ref('0.0.0');
 const checkingUpdate = ref(false);
+
+const openGithub = async () => {
+  await open('https://github.com/neko233-com/neko233-hardware-viewer');
+};
+
+const openStar = async () => {
+  await open('https://github.com/neko233-com/neko233-hardware-viewer');
+};
 
 const toggleAutostart = async () => {
   try {

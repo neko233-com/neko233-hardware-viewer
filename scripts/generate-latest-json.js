@@ -15,6 +15,7 @@ if (!targetDir || !version) {
 let files;
 try {
   files = fs.readdirSync(targetDir);
+  console.log(`Files in ${targetDir}:`, files);
 } catch (e) {
   console.error(`Failed to read directory ${targetDir}: ${e.message}`);
   process.exit(1);

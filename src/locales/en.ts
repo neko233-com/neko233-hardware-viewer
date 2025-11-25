@@ -113,6 +113,20 @@ export default {
     apps: 'App Manager',
     settings: 'Settings'
   },
+  settings: {
+    title: 'System Settings',
+    general: 'General',
+    autostart: 'Autostart',
+    autoUpdate: 'Auto Update',
+    about: 'About',
+    currentVersion: 'Current Version',
+    checkUpdate: 'Check Update',
+    checking: 'Checking...',
+    updateAvailable: 'Update Available',
+    updateNow: 'Update Now',
+    noUpdate: 'You are using the latest version',
+    star: 'Star'
+  },
   optimization: {
     title: 'SYSTEM OPTIMIZATION',
     subtitle: 'TWEAK & BOOST PERFORMANCE',
