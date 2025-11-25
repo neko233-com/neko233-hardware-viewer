@@ -201,7 +201,7 @@ console.log('');
 
     // 复制 MSI
     if (fs.existsSync(msiDir)) {
-        const files = fs.readdirSync(msiDir).filter(f => f.endsWith('.msi'));
+        const files = fs.readdirSync(msiDir).filter(f => f.endsWith('.msi') || f.endsWith('.msi.zip'));
         files.forEach(file => {
             fs.copyFileSync(path.join(msiDir, file), path.join(releaseDir, file));
             console.log(`已复制: ${file}`);
@@ -211,7 +211,7 @@ console.log('');
 
     // 复制 NSIS (Exe)
     if (fs.existsSync(nsisDir)) {
-        const files = fs.readdirSync(nsisDir).filter(f => f.endsWith('.exe'));
+        const files = fs.readdirSync(nsisDir).filter(f => f.endsWith('.exe') || f.endsWith('.nsis.zip'));
         files.forEach(file => {
             fs.copyFileSync(path.join(nsisDir, file), path.join(releaseDir, file));
             console.log(`已复制: ${file}`);

@@ -948,6 +948,9 @@ fn main() {
             optimization::disable_bing_search,
             optimization::disable_aero_shake,
             optimization::disable_timeline,
+            optimization::clear_temp_files,
+            optimization::clear_dns_cache,
+            optimization::reset_network_stack,
             // Diagnostics
             diagnostics::check_disk_health,
             diagnostics::check_system_file_integrity,
