@@ -51,11 +51,18 @@ if (!installerZip || !installerSig) {
         // Let's just read it here.
         const sigContent = fs.readFileSync(path.join(nsisDir, nsisSig), 'utf8');
         const cleanVersion = version.startsWith('v') ? version.substring(1) : version;
-        platforms['windows-x86_64'] = {
+        
+        // Detect architecture from filename
+        let arch = 'x86_64';
+        if (nsisZip.includes('aarch64') || nsisZip.includes('arm64')) {
+            arch = 'aarch64';
+        }
+        
+        platforms[`windows-${arch}`] = {
           signature: sigContent,
-          url: `https://raw.githubusercontent.com/neko233-com/neko233-hardware-viewer/main/release/neko233-hardware-viewer_${cleanVersion}_x64-setup.nsis.zip`
+          url: `https://github.com/neko233-com/neko233-hardware-viewer/releases/download/v${cleanVersion}/${nsisZip}`
         };
-        console.log(`Found NSIS artifact: ${nsisZip}`);
+        console.log(`Found NSIS artifact: ${nsisZip} for arch: ${arch}`);
       } else {
           console.log("NSIS zip or sig not found.");
       }
@@ -66,11 +73,18 @@ if (!installerZip || !installerSig) {
 } else {
   const sigContent = fs.readFileSync(path.join(targetDir, installerSig), 'utf8');
   const cleanVersion = version.startsWith('v') ? version.substring(1) : version;
-  platforms['windows-x86_64'] = {
+  
+  // Detect architecture from filename
+  let arch = 'x86_64';
+  if (installerZip.includes('aarch64') || installerZip.includes('arm64')) {
+      arch = 'aarch64';
+  }
+
+  platforms[`windows-${arch}`] = {
     signature: sigContent,
-    url: `https://raw.githubusercontent.com/neko233-com/neko233-hardware-viewer/main/release/neko233-hardware-viewer_${cleanVersion}_x64_en-US.msi.zip`
+    url: `https://github.com/neko233-com/neko233-hardware-viewer/releases/download/v${cleanVersion}/${installerZip}`
   };
-  console.log(`Found MSI artifact: ${installerZip}`);
+  console.log(`Found MSI artifact: ${installerZip} for arch: ${arch}`);
 }
 
 if (Object.keys(platforms).length === 0) {
